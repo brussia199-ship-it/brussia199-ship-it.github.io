@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>INTERNET TV</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="tv-container" id="tvContainer">
+  <div class="top-bar">
+    <div class="clock" id="clockDisplay">--:--</div>
+    <div class="channel-name">✦ INTERNET TV</div>
+  </div>
+
+  <div class="video-wrap" id="videoWrap">
+    <iframe id="playerFrame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
+    <div class="video-overlay"></div>
+  </div>
+
+  <div class="bottom-bar">
+    <div class="controls">
+      <button id="fullscreenBtn" class="ctrl-btn">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <polyline points="15 3 21 3 21 9"></polyline>
+          <polyline points="9 21 3 21 3 15"></polyline>
+          <line x1="21" y1="3" x2="14" y2="10"></line>
+          <line x1="3" y1="21" x2="10" y2="14"></line>
+        </svg>
+        <span>На весь экран</span>
+      </button>
+      <button id="muteBtn" class="ctrl-btn">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+          <line x1="23" y1="9" x2="17" y2="15"></line>
+          <line x1="17" y1="9" x2="23" y2="15"></line>
+        </svg>
+        <span id="muteLabel">🔊 Звук</span>
+      </button>
+    </div>
+    <span class="now-playing" id="nowPlaying">●</span>
+    <span class="live-badge">LIVE</span>
+  </div>
+</div>
+
+<script src="playlist.js"></script>
+<script src="player.js"></script>
+</body>
+</html>
