@@ -2,56 +2,49 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
     <title>INTERNET TV — Прямой эфир</title>
 
     <!-- =========================================================== -->
-    <!-- 1. ЗАЩИТА ОТ ИНСТРУМЕНТОВ РАЗРАБОТЧИКА (САМАЯ СИЛЬНАЯ)        -->
+    <!-- 1. ЗАЩИТА ОТ ИНСТРУМЕНТОВ РАЗРАБОТЧИКА                      -->
     <!-- =========================================================== -->
     <script>
         (function() {
             'use strict';
 
-            // Блокировка всех комбинаций клавиш
             document.addEventListener('keydown', function(e) {
-                // F12
                 if (e.key === 'F12') {
                     e.preventDefault();
                     e.stopPropagation();
                     return false;
                 }
-                // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
                 if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
                     e.preventDefault();
                     e.stopPropagation();
                     return false;
                 }
-                // Ctrl+U / Ctrl+S / Ctrl+P
                 if (e.ctrlKey && (e.key === 'U' || e.key === 'S' || e.key === 'P')) {
                     e.preventDefault();
                     e.stopPropagation();
                     return false;
                 }
-                // F1 (справка)
                 if (e.key === 'F1') {
                     e.preventDefault();
                     return false;
                 }
             }, true);
 
-            // Блокировка правого клика
             document.addEventListener('contextmenu', function(e) {
                 e.preventDefault();
                 return false;
             }, true);
 
-            // Блокировка на уровне window
             window.addEventListener('keydown', function(e) {
                 if (e.ctrlKey && e.shiftKey) {
                     e.preventDefault();
                     return false;
                 }
-                if (e.metaKey && e.altKey && e.key === 'I') { // Mac
+                if (e.metaKey && e.altKey && e.key === 'I') {
                     e.preventDefault();
                     return false;
                 }
@@ -61,7 +54,6 @@
                 }
             }, true);
 
-            // Блокировка keyup
             window.addEventListener('keyup', function(e) {
                 if (e.key === 'F12') {
                     e.preventDefault();
@@ -69,7 +61,7 @@
                 }
             }, true);
 
-            console.log('🛡️ Защита от инструментов разработчика активирована!');
+            console.log('🛡️ Защита активирована!');
         })();
     </script>
 
@@ -85,55 +77,113 @@
 
         :root {
             --bg-main: #020617;
-            --panel-bg: rgba(15, 23, 42, 0.45);
+            --panel-bg: rgba(15, 23, 42, 0.6);
             --accent: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.3);
+            --accent-glow: rgba(56, 189, 248, 0.25);
             --text-main: #f8fafc;
         }
 
         body {
             background-color: var(--bg-main);
             background-image:
-                radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-                radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%);
+                radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.12) 0%, transparent 50%);
             color: var(--text-main);
-            font-family: system-ui, -apple-system, sans-serif;
+            font-family: system-ui, -apple-system, -apple-system, 'Segoe UI', Roboto, sans-serif;
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 12px;
             user-select: none;
             -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
         }
 
         .cinema-grid {
             display: grid;
-            grid-template-columns: 1fr 340px;
-            gap: 24px;
+            grid-template-columns: 1fr 320px;
+            gap: 20px;
             width: 100%;
-            max-width: 1150px;
+            max-width: 1100px;
         }
 
-        @media (max-width: 900px) {
+        /* ===== АДАПТИВ ДЛЯ МОБИЛЬНЫХ ===== */
+        @media (max-width: 800px) {
             .cinema-grid {
                 grid-template-columns: 1fr;
+                gap: 16px;
+            }
+            body {
+                padding: 8px;
+            }
+            .side-dashboard {
+                padding: 16px;
+            }
+            .station-info h1 {
+                font-size: 22px;
+            }
+            .meta-list li {
+                padding: 6px 0;
+                font-size: 12px;
+            }
+            .clock {
+                font-size: 18px;
+            }
+            .btn-modern {
+                padding: 12px;
+                font-size: 11px;
             }
         }
 
+        @media (max-width: 450px) {
+            .side-dashboard {
+                padding: 12px;
+                border-radius: 16px;
+            }
+            .station-info h1 {
+                font-size: 18px;
+                margin: 6px 0 0 0;
+            }
+            .badge-live {
+                font-size: 9px;
+                padding: 3px 10px;
+            }
+            .meta-list li {
+                padding: 5px 0;
+                font-size: 11px;
+            }
+            .meta-list {
+                margin: 10px 0;
+            }
+            .clock {
+                font-size: 15px;
+                margin: 4px 0 6px 0;
+            }
+            .btn-modern {
+                padding: 10px;
+                font-size: 10px;
+                border-radius: 10px;
+                letter-spacing: 1px;
+            }
+            .action-container {
+                gap: 6px;
+            }
+        }
+
+        /* ПЛЕЕР */
         .video-section {
             display: flex;
             flex-direction: column;
-            gap: 16px;
+            gap: 12px;
         }
 
-        /* ПЛЕЕР С ЩИТОМ */
         .main-theater {
             position: relative;
             background: #000;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 50px var(--accent-glow);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.8), 0 0 40px var(--accent-glow);
             aspect-ratio: 16 / 9;
             overflow: hidden;
             width: 100%;
@@ -146,7 +196,6 @@
             border: none;
         }
 
-        /* НЕВИДИМЫЙ ЩИТ — БЛОКИРУЕТ ПАУЗУ И КЛИКИ */
         .shield {
             position: absolute;
             top: 0;
@@ -162,64 +211,83 @@
         /* САЙДБАР */
         .side-dashboard {
             background: var(--panel-bg);
-            backdrop-filter: blur(16px);
-            -webkit-backdrop-filter: blur(16px);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 24px;
-            padding: 24px;
+            border-radius: 20px;
+            padding: 20px;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
         }
 
         .station-info h1 {
-            font-size: 28px;
+            font-size: 26px;
             font-weight: 800;
             letter-spacing: 2px;
-            margin: 12px 0 0 0;
-            background: linear-gradient(135deg, #fff 40%, var(--accent));
+            margin: 8px 0 0 0;
+            background: linear-gradient(135deg, #fff 35%, var(--accent));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
+            background-clip: text;
         }
 
         .badge-live {
             display: inline-flex;
             align-items: center;
             gap: 6px;
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            padding: 4px 12px;
+            background: rgba(255, 165, 0, 0.12);
+            color: #FF8C00;
+            padding: 3px 12px;
             border-radius: 8px;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 1px;
-            border: 1px solid rgba(239, 68, 68, 0.2);
+            border: 1px solid rgba(255, 165, 0, 0.2);
         }
 
         .pulse-ring {
-            width: 6px;
-            height: 6px;
-            background: #ef4444;
+            width: 5px;
+            height: 5px;
+            background: #FF8C00;
             border-radius: 50%;
             animation: live-glow 1.5s infinite;
         }
 
         @keyframes live-glow {
             0% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.7);
             }
             70% {
-                box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+                box-shadow: 0 0 0 6px rgba(255, 165, 0, 0);
             }
             100% {
-                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0);
             }
         }
 
+        .clock {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-align: center;
+            margin: 4px 0 8px 0;
+            font-variant-numeric: tabular-nums;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            padding: 4px 8px;
+            border-radius: 8px;
+        }
+
+        .clock:hover {
+            background: rgba(56, 189, 248, 0.05);
+        }
+
         .meta-list {
-            margin: 20px 0;
+            margin: 12px 0 16px 0;
             padding: 0;
             list-style: none;
             font-size: 13px;
@@ -227,67 +295,338 @@
         }
 
         .meta-list li {
-            padding: 10px 0;
+            padding: 8px 0;
             border-bottom: 1px solid rgba(255, 255, 255, 0.03);
             display: flex;
             justify-content: space-between;
         }
 
+        .meta-list li:last-child {
+            border-bottom: none;
+        }
+
         .meta-list strong {
             color: #f1f5f9;
+            font-weight: 600;
         }
 
-        /* Стили для часов */
-        .clock {
-            font-size: 20px;
-            font-weight: 700;
-            color: var(--accent);
-            letter-spacing: 1px;
-            text-align: center;
-            margin: 6px 0 10px 0;
-            font-variant-numeric: tabular-nums;
-        }
-
+        /* КНОПКИ */
         .action-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 8px;
         }
 
         .btn-modern {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.06);
             color: #fff;
-            padding: 14px;
+            padding: 13px;
             border-radius: 12px;
             font-size: 12px;
             font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
+            letter-spacing: 1.2px;
             cursor: pointer;
             transition: all 0.2s ease;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .btn-modern:active {
+            transform: scale(0.97);
         }
 
         .btn-modern:hover {
             background: rgba(56, 189, 248, 0.08);
             border-color: var(--accent);
             color: var(--accent);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
         }
 
         .btn-glow {
             background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
             border: none;
+            color: #fff;
         }
 
         .btn-glow:hover {
             background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
             color: #fff;
-            box-shadow: 0 0 25px rgba(99, 102, 241, 0.35);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .btn-glow:active {
+            background: linear-gradient(135deg, #0369a1 0%, #4338ca 100%);
+        }
+
+        /* Двойные кнопки в ряд */
+        .btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        .btn-row .btn-modern {
+            padding: 13px 8px;
+            font-size: 11px;
+            letter-spacing: 0.8px;
+        }
+
+        @media (max-width: 450px) {
+            .btn-row {
+                gap: 6px;
+            }
+            .btn-row .btn-modern {
+                padding: 10px 6px;
+                font-size: 9px;
+                letter-spacing: 0.5px;
+                border-radius: 10px;
+            }
+        }
+
+        /* =========================================================== */
+        /* 3. АДМИН-ПАНЕЛЬ                                            */
+        /* =========================================================== */
+        .admin-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .admin-overlay.active {
+            display: flex;
+        }
+
+        .admin-panel {
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 100%;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
+            position: relative;
+        }
+
+        .admin-panel h2 {
+            color: var(--accent);
+            font-size: 22px;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+        }
+
+        .admin-panel .subtitle {
+            color: #94a3b8;
+            font-size: 13px;
+            margin-bottom: 24px;
+        }
+
+        .admin-panel label {
+            display: block;
+            color: #e2e8f0;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .admin-panel input,
+        .admin-panel textarea {
+            width: 100%;
+            padding: 12px 14px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-family: inherit;
+            transition: all 0.2s ease;
+            margin-bottom: 16px;
+        }
+
+        .admin-panel input:focus,
+        .admin-panel textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
+        }
+
+        .admin-panel textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .admin-panel .btn-submit {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            border: none;
+            border-radius: 12px;
+            color: #fff;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .admin-panel .btn-submit:hover {
+            background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .admin-panel .btn-close {
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: #94a3b8;
+            font-size: 24px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .admin-panel .btn-close:hover {
+            color: #fff;
+        }
+
+        .admin-panel .status-msg {
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .admin-panel .status-msg.success {
+            display: block;
+            background: rgba(34, 197, 94, 0.15);
+            color: #4ade80;
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        .admin-panel .status-msg.error {
+            display: block;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .admin-panel .video-list {
+            margin-top: 16px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+
+        .admin-panel .video-list-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.03);
+            border-radius: 8px;
+            margin-bottom: 4px;
+            font-size: 13px;
+            color: #e2e8f0;
+        }
+
+        .admin-panel .video-list-item .remove-btn {
+            background: none;
+            border: none;
+            color: #ef4444;
+            cursor: pointer;
+            font-size: 16px;
+            padding: 0 4px;
+        }
+
+        .admin-panel .video-list-item .remove-btn:hover {
+            color: #dc2626;
+        }
+
+        .admin-panel .hint {
+            color: #64748b;
+            font-size: 12px;
+            margin-top: -12px;
+            margin-bottom: 12px;
+        }
+
+        /* Стили для ввода пароля */
+        .password-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .password-section .password-input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .password-section .password-input-row input {
+            flex: 1;
+            margin-bottom: 0;
+        }
+
+        .password-section .password-input-row .btn-check {
+            padding: 12px 20px;
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.2);
+            border-radius: 12px;
+            color: var(--accent);
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .password-section .password-input-row .btn-check:hover {
+            background: rgba(56, 189, 248, 0.25);
+        }
+
+        .password-section .password-status {
+            margin-top: 8px;
+            font-size: 13px;
+            display: none;
+        }
+
+        .password-section .password-status.error {
+            display: block;
+            color: #f87171;
+        }
+
+        .password-section .password-status.success {
+            display: block;
+            color: #4ade80;
+        }
+
+        .admin-content {
+            display: none;
+        }
+
+        .admin-content.active {
+            display: block;
+        }
+
+        .password-lock-icon {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 8px;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -302,69 +641,110 @@
         <div class="video-section">
             <div class="main-theater" id="playerContainer">
                 <div class="shield" id="shield"></div>
-                <!-- Плейсхолдер для VK Video -->
                 <div id="vk-iframe-placeholder"></div>
             </div>
         </div>
 
-        <!-- ПРАВАЯ КОЛОНКА: ИНФО + КНОПКИ -->
+        <!-- ПРАВАЯ КОЛОНКА -->
         <div class="side-dashboard">
             <div class="station-info">
                 <div class="badge-live">
                     <div class="pulse-ring"></div>
-                    Эфир
+                    Технические работы
                 </div>
                 <h1>INTERNET TV</h1>
 
-                <!-- ЧАСЫ -->
                 <div class="clock" id="clockDisplay">--:--:--</div>
 
                 <ul class="meta-list">
                     <li>Сейчас в эфире: <strong id="currentShowTitle">Загрузка...</strong></li>
-                    <li>Качество: <strong>Ultra HD 4K</strong></li>
-                    <li>Онлайн: <strong><span id="onlineCount">0</span> чел.</strong></li>
                 </ul>
             </div>
 
             <div class="action-container">
-                <button class="btn-modern btn-glow" id="mute-btn">🔊 Включить звук</button>
-                <button class="btn-modern" id="fs-btn">📺 Полный экран</button>
+                <div class="btn-row">
+                    <button class="btn-modern btn-glow" id="fs-btn">📺 На весь экран</button>
+                    <button class="btn-modern" id="mute-btn">🔊 Звук</button>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- =========================================================== -->
-    <!-- 4. ПОДКЛЮЧЕНИЕ VK VIDEO IFRAME API                         -->
+    <!-- 4. АДМИН-ПАНЕЛЬ                                             -->
+    <!-- =========================================================== -->
+    <div class="admin-overlay" id="adminOverlay">
+        <div class="admin-panel">
+            <button class="btn-close" id="adminClose">✕</button>
+            <h2>⚙️ Админ-панель</h2>
+            <p class="subtitle">Управление плейлистом INTERNET TV</p>
+
+            <!-- БЛОК ВВОДА ПАРОЛЯ -->
+            <div class="password-section" id="passwordSection">
+                <div class="password-lock-icon">🔒</div>
+                <label for="adminPassword">Введите пароль для доступа</label>
+                <div class="password-input-row">
+                    <input type="password" id="adminPassword" placeholder="Введите пароль..." />
+                    <button class="btn-check" id="checkPasswordBtn">Войти</button>
+                </div>
+                <div class="password-status" id="passwordStatus"></div>
+            </div>
+
+            <!-- КОНТЕНТ АДМИНКИ (скрыт до ввода пароля) -->
+            <div class="admin-content" id="adminContent">
+                <label for="videoUrl">Ссылка на видео VK</label>
+                <input type="text" id="videoUrl" placeholder="https://vk.com/video-123456_789012" />
+                <div class="hint">Поддерживаются ссылки вида vk.com/video-XXXXX_YYYYY</div>
+
+                <label for="videoTitle">Название видео</label>
+                <input type="text" id="videoTitle" placeholder="Название для отображения" />
+
+                <button class="btn-submit" id="addVideoBtn">➕ Добавить в плейлист</button>
+
+                <div class="status-msg" id="statusMsg"></div>
+
+                <div class="video-list" id="videoList"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- =========================================================== -->
+    <!-- 5. VK VIDEO API                                             -->
     <!-- =========================================================== -->
     <script src="https://vk.com/js/api/openapi.js?169"></script>
 
     <!-- =========================================================== -->
-    <!-- 5. ОСНОВНОЙ СКРИПТ                                          -->
+    <!-- 6. ОСНОВНОЙ СКРИПТ                                          -->
     <!-- =========================================================== -->
     <script>
         // ============================================================
-        // 📋 ПЛЕЙЛИСТ — ID ВИДЕО ИЗ VK
-        // Формат: oid (владелец) + id (видео)
-        // Например: https://vkvideo.ru/video-236922133_456239096
-        // oid = -123456, id = 789012
+        // ПАРОЛЬ
         // ============================================================
-        const playlist = [
-            { oid: '-236922133', id: '456239096', title: 'Начало вещание!' },
+        const ADMIN_PASSWORD = 'HABAR1201840194HIFLY';
+
+        // ============================================================
+        // ПЛЕЙЛИСТ
+        // ============================================================
+        let playlist = [
+            { oid: '-232854892', id: '456239108', title: 'ВИКТОРОВИЧ' },
             { oid: '-217256769', id: '456239103', title: 'Чип и дейл спешат на помощь' },
-            { oid: '-217256769', id: '456239102', title: 'А4 Кто последний покинет кухню челлендж' }
+            { oid: '-217256769', id: '456239102', title: 'А4 — Челлендж на кухне' }
         ];
 
         // ============================================================
-        // 🧠 ПЕРЕМЕННЫЕ
+        // ПЕРЕМЕННЫЕ
         // ============================================================
         let currentTrackIndex = 0;
         let isMuted = true;
         let player = null;
-        let playerReady = false;
         let savedTime = 0;
+        let trackTimer = null;
+        let clickCount = 0;
+        let clickTimer = null;
+        let isPasswordCorrect = false;
 
         // ============================================================
-        // ⏰ ЧАСЫ
+        // ⏰ ЧАСЫ + ОТКРЫТИЕ АДМИНКИ ПО 20 КЛИКАМ
         // ============================================================
         function updateClock() {
             const now = new Date();
@@ -376,8 +756,180 @@
         updateClock();
         setInterval(updateClock, 1000);
 
+        // Обработчик кликов по часам
+        document.getElementById('clockDisplay').addEventListener('click', function() {
+            clickCount++;
+
+            if (clickTimer) clearTimeout(clickTimer);
+            clickTimer = setTimeout(() => {
+                clickCount = 0;
+            }, 2000);
+
+            if (clickCount >= 20) {
+                clickCount = 0;
+                // Сбрасываем пароль при открытии
+                isPasswordCorrect = false;
+                document.getElementById('passwordSection').style.display = 'block';
+                document.getElementById('adminContent').classList.remove('active');
+                document.getElementById('adminPassword').value = '';
+                document.getElementById('passwordStatus').className = 'password-status';
+                document.getElementById('passwordStatus').textContent = '';
+                document.getElementById('adminOverlay').classList.add('active');
+            }
+        });
+
         // ============================================================
-        // ⏳ ВОССТАНОВЛЕНИЕ ВРЕМЕНИ ПРИ ПЕРЕЗАГРУЗКЕ
+        // ПРОВЕРКА ПАРОЛЯ
+        // ============================================================
+        document.getElementById('checkPasswordBtn').addEventListener('click', function() {
+            checkPassword();
+        });
+
+        document.getElementById('adminPassword').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                checkPassword();
+            }
+        });
+
+        function checkPassword() {
+            const input = document.getElementById('adminPassword');
+            const status = document.getElementById('passwordStatus');
+            const password = input.value.trim();
+
+            if (password === ADMIN_PASSWORD) {
+                isPasswordCorrect = true;
+                status.className = 'password-status success';
+                status.textContent = '✅ Доступ разрешён!';
+                document.getElementById('passwordSection').style.display = 'none';
+                document.getElementById('adminContent').classList.add('active');
+                updateVideoList();
+                setTimeout(() => {
+                    status.className = 'password-status';
+                    status.textContent = '';
+                }, 1500);
+            } else {
+                status.className = 'password-status error';
+                status.textContent = '❌ Неверный пароль! Попробуйте снова.';
+                input.value = '';
+                input.focus();
+                setTimeout(() => {
+                    status.className = 'password-status';
+                    status.textContent = '';
+                }, 3000);
+            }
+        }
+
+        // ============================================================
+        // АДМИН-ПАНЕЛЬ — ДОБАВЛЕНИЕ ВИДЕО
+        // ============================================================
+        function parseVkUrl(url) {
+            const match = url.match(/video(-?\d+)_(\d+)/);
+            if (match) {
+                return { oid: match[1], id: match[2] };
+            }
+            return null;
+        }
+
+        document.getElementById('addVideoBtn').addEventListener('click', function() {
+            if (!isPasswordCorrect) {
+                document.getElementById('statusMsg').className = 'status-msg error';
+                document.getElementById('statusMsg').textContent = '❌ Сначала введите пароль!';
+                return;
+            }
+
+            const urlInput = document.getElementById('videoUrl');
+            const titleInput = document.getElementById('videoTitle');
+            const statusMsg = document.getElementById('statusMsg');
+
+            const url = urlInput.value.trim();
+            const title = titleInput.value.trim() || 'Без названия';
+
+            if (!url) {
+                statusMsg.className = 'status-msg error';
+                statusMsg.textContent = '❌ Введите ссылку на видео';
+                return;
+            }
+
+            const parsed = parseVkUrl(url);
+            if (!parsed) {
+                statusMsg.className = 'status-msg error';
+                statusMsg.textContent = '❌ Неверный формат ссылки. Пример: https://vk.com/video-123456_789012';
+                return;
+            }
+
+            playlist.push({
+                oid: parsed.oid,
+                id: parsed.id,
+                title: title
+            });
+
+            updateVideoList();
+            updateCurrentVideo();
+
+            statusMsg.className = 'status-msg success';
+            statusMsg.textContent = '✅ Видео добавлено!';
+            urlInput.value = '';
+            titleInput.value = '';
+
+            createPlayer();
+            startTrackTimer();
+        });
+
+        function updateVideoList() {
+            const list = document.getElementById('videoList');
+            if (playlist.length === 0) {
+                list.innerHTML =
+                '<div style="color:#64748b;font-size:13px;text-align:center;padding:12px;">Плейлист пуст</div>';
+                return;
+            }
+
+            list.innerHTML = playlist.map((item, index) =>
+                `<div class="video-list-item">
+                    <span>${index + 1}. ${item.title}</span>
+                    <button class="remove-btn" data-index="${index}">✕</button>
+                </div>`
+            ).join('');
+
+            list.querySelectorAll('.remove-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const index = parseInt(this.dataset.index);
+                    if (confirm(`Удалить "${playlist[index].title}"?`)) {
+                        playlist.splice(index, 1);
+                        updateVideoList();
+                        if (currentTrackIndex >= playlist.length) {
+                            currentTrackIndex = 0;
+                        }
+                        createPlayer();
+                        startTrackTimer();
+                    }
+                });
+            });
+        }
+
+        function updateCurrentVideo() {
+            if (playlist.length > 0 && currentTrackIndex >= playlist.length) {
+                currentTrackIndex = 0;
+            }
+            if (playlist.length > 0) {
+                document.getElementById('currentShowTitle').textContent = playlist[currentTrackIndex].title;
+            } else {
+                document.getElementById('currentShowTitle').textContent = 'Плейлист пуст';
+            }
+        }
+
+        // Закрытие админки
+        document.getElementById('adminClose').addEventListener('click', function() {
+            document.getElementById('adminOverlay').classList.remove('active');
+        });
+
+        document.getElementById('adminOverlay').addEventListener('click', function(e) {
+            if (e.target === this) {
+                this.classList.remove('active');
+            }
+        });
+
+        // ============================================================
+        // СОХРАНЕНИЕ СОСТОЯНИЯ
         // ============================================================
         function loadSavedState() {
             const saved = localStorage.getItem('internet_tv_state');
@@ -390,6 +942,9 @@
                     if (data.time) {
                         savedTime = parseFloat(data.time) || 0;
                     }
+                    if (data.playlist) {
+                        playlist = data.playlist;
+                    }
                 } catch (e) { /* тихо */ }
             }
         }
@@ -398,26 +953,36 @@
             try {
                 localStorage.setItem('internet_tv_state', JSON.stringify({
                     trackIndex: currentTrackIndex,
-                    time: time || 0
+                    time: time || 0,
+                    playlist: playlist
                 }));
             } catch (e) { /* тихо */ }
         }
 
         // ============================================================
-        // 🚀 СОЗДАНИЕ ПЛЕЕРА (VK Video)
+        // СОЗДАНИЕ ПЛЕЕРА (VK)
         // ============================================================
         function createPlayer() {
             const container = document.getElementById('playerContainer');
             const placeholder = document.getElementById('vk-iframe-placeholder');
             if (!placeholder) return;
 
+            if (playlist.length === 0) {
+                placeholder.innerHTML =
+                    '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:16px;">Плейлист пуст</div>';
+                document.getElementById('currentShowTitle').textContent = 'Плейлист пуст';
+                return;
+            }
+
+            if (currentTrackIndex >= playlist.length) {
+                currentTrackIndex = 0;
+            }
+
             const video = playlist[currentTrackIndex];
             document.getElementById('currentShowTitle').textContent = video.title;
 
-            // Очищаем плейсхолдер
             placeholder.innerHTML = '';
 
-            // Создаём iframe VK Video
             const iframe = document.createElement('iframe');
             iframe.src =
                 `https://vk.com/video_ext.php?oid=${video.oid}&id=${video.id}&hash=5d6e5c6d7b1e84&autoplay=1&mute=${isMuted ? 1 : 0}`;
@@ -431,22 +996,8 @@
             iframe.style.height = '100%';
 
             placeholder.appendChild(iframe);
-
-            // Сохраняем ссылку на iframe как плеер
             player = iframe;
 
-            // Имитация готовности плеера
-            playerReady = true;
-
-            // Сохраняем время каждые 5 секунд (имитация)
-            if (window._tvInterval) clearInterval(window._tvInterval);
-            window._tvInterval = setInterval(() => {
-                // VK Video не даёт API для получения времени, сохраняем прогресс приблизительно
-                // Можно сохранять только индекс трека
-                saveCurrentState(0);
-            }, 5000);
-
-            // Восстанавливаем щит (на случай, если его нет)
             let shield = document.getElementById('shield');
             if (!shield) {
                 shield = document.createElement('div');
@@ -455,19 +1006,15 @@
                 container.appendChild(shield);
             }
 
-            console.log('🎬 VK Video плеер загружен:', video.title);
+            console.log('🎬 VK Video:', video.title);
         }
 
         // ============================================================
-        // 🔄 АВТОПЕРЕКЛЮЧЕНИЕ (имитация окончания видео)
+        // АВТОПЕРЕКЛЮЧЕНИЕ
         // ============================================================
-        // VK Video не даёт событий окончания, поэтому переключаем по таймеру
-        // (длительность видео ~5-10 минут)
-        let trackTimer = null;
-
         function startTrackTimer() {
             if (trackTimer) clearTimeout(trackTimer);
-            // Переключаем через 8 минут (480 секунд)
+            if (playlist.length === 0) return;
             trackTimer = setTimeout(() => {
                 currentTrackIndex++;
                 if (currentTrackIndex >= playlist.length) {
@@ -481,22 +1028,18 @@
         }
 
         // ============================================================
-        // 🔊 КНОПКА ЗВУКА (для VK Video работает через пересоздание)
+        // КНОПКА ЗВУКА
         // ============================================================
-        document.getElementById('mute-btn').addEventListener('click', function() {
+        const muteBtn = document.getElementById('mute-btn');
+        muteBtn.addEventListener('click', function() {
             isMuted = !isMuted;
-            if (isMuted) {
-                this.textContent = '🔊 Включить звук';
-            } else {
-                this.textContent = '🔇 Выключить звук';
-            }
-            // Пересоздаём плеер для применения mute
+            this.textContent = isMuted ? '🔊 Звук' : '🔇 Без звука';
             createPlayer();
             startTrackTimer();
         });
 
         // ============================================================
-        // 📺 ПОЛНЫЙ ЭКРАН
+        // КНОПКА ПОЛНЫЙ ЭКРАН
         // ============================================================
         document.getElementById('fs-btn').addEventListener('click', function() {
             const container = document.getElementById('playerContainer');
@@ -504,30 +1047,25 @@
                 container.requestFullscreen();
             } else if (container.webkitRequestFullscreen) {
                 container.webkitRequestFullscreen();
+            } else if (container.msRequestFullscreen) {
+                container.msRequestFullscreen();
             }
         });
 
         // ============================================================
-        // 🧹 СОХРАНЕНИЕ ПРИ ВЫХОДЕ
-        // ============================================================
-        window.addEventListener('beforeunload', function() {
-            saveCurrentState(0);
-        });
-
-        // ============================================================
-        // 🚀 ЗАПУСК
+        // ЗАПУСК
         // ============================================================
         loadSavedState();
         createPlayer();
         startTrackTimer();
 
-        // Имитация онлайн-зрителей
-        setInterval(() => {
-            const count = Math.floor(Math.random() * 50) + 15;
-            document.getElementById('onlineCount').textContent = count;
-        }, 15000);
+        window.addEventListener('beforeunload', function() {
+            saveCurrentState(0);
+        });
 
         console.log('📺 INTERNET TV загружен!');
+        console.log('🔑 Админ-панель: 20 кликов по часам');
+        console.log('🔒 Пароль: ' + ADMIN_PASSWORD);
     </script>
 
 </body>
