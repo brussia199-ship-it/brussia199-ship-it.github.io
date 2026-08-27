@@ -1,50 +1,534 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>INTERNET TV</title>
-  <link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>INTERNET TV — Прямой эфир</title>
+
+    <!-- =========================================================== -->
+    <!-- 1. ЗАЩИТА ОТ ИНСТРУМЕНТОВ РАЗРАБОТЧИКА (САМАЯ СИЛЬНАЯ)        -->
+    <!-- =========================================================== -->
+    <script>
+        (function() {
+            'use strict';
+
+            // Блокировка всех комбинаций клавиш
+            document.addEventListener('keydown', function(e) {
+                // F12
+                if (e.key === 'F12') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+Shift+C
+                if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // Ctrl+U / Ctrl+S / Ctrl+P
+                if (e.ctrlKey && (e.key === 'U' || e.key === 'S' || e.key === 'P')) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    return false;
+                }
+                // F1 (справка)
+                if (e.key === 'F1') {
+                    e.preventDefault();
+                    return false;
+                }
+            }, true);
+
+            // Блокировка правого клика
+            document.addEventListener('contextmenu', function(e) {
+                e.preventDefault();
+                return false;
+            }, true);
+
+            // Блокировка на уровне window
+            window.addEventListener('keydown', function(e) {
+                if (e.ctrlKey && e.shiftKey) {
+                    e.preventDefault();
+                    return false;
+                }
+                if (e.metaKey && e.altKey && e.key === 'I') { // Mac
+                    e.preventDefault();
+                    return false;
+                }
+                if (e.key === 'F12') {
+                    e.preventDefault();
+                    return false;
+                }
+            }, true);
+
+            // Блокировка keyup
+            window.addEventListener('keyup', function(e) {
+                if (e.key === 'F12') {
+                    e.preventDefault();
+                    return false;
+                }
+            }, true);
+
+            console.log('🛡️ Защита от инструментов разработчика активирована!');
+        })();
+    </script>
+
+    <style>
+        /* =========================================================== */
+        /* 2. СТИЛИ                                                   */
+        /* =========================================================== */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-main: #020617;
+            --panel-bg: rgba(15, 23, 42, 0.45);
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.3);
+            --text-main: #f8fafc;
+        }
+
+        body {
+            background-color: var(--bg-main);
+            background-image:
+                radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.15) 0%, transparent 50%);
+            color: var(--text-main);
+            font-family: system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .cinema-grid {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+            width: 100%;
+            max-width: 1150px;
+        }
+
+        @media (max-width: 900px) {
+            .cinema-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .video-section {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* ПЛЕЕР С ЩИТОМ */
+        .main-theater {
+            position: relative;
+            background: #000;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.8), 0 0 50px var(--accent-glow);
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .main-theater iframe,
+        .main-theater #vk-iframe-placeholder {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* НЕВИДИМЫЙ ЩИТ — БЛОКИРУЕТ ПАУЗУ И КЛИКИ */
+        .shield {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 50;
+            cursor: default;
+            pointer-events: auto;
+            background: transparent;
+        }
+
+        /* САЙДБАР */
+        .side-dashboard {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 24px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+        }
+
+        .station-info h1 {
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 2px;
+            margin: 12px 0 0 0;
+            background: linear-gradient(135deg, #fff 40%, var(--accent));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .badge-live {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(239, 68, 68, 0.15);
+            color: #f87171;
+            padding: 4px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        .pulse-ring {
+            width: 6px;
+            height: 6px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: live-glow 1.5s infinite;
+        }
+
+        @keyframes live-glow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+            70% {
+                box-shadow: 0 0 0 6px rgba(239, 68, 68, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .meta-list {
+            margin: 20px 0;
+            padding: 0;
+            list-style: none;
+            font-size: 13px;
+            color: #94a3b8;
+        }
+
+        .meta-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .meta-list strong {
+            color: #f1f5f9;
+        }
+
+        /* Стили для часов */
+        .clock {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--accent);
+            letter-spacing: 1px;
+            text-align: center;
+            margin: 6px 0 10px 0;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .action-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn-modern {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            color: #fff;
+            padding: 14px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-modern:hover {
+            background: rgba(56, 189, 248, 0.08);
+            border-color: var(--accent);
+            color: var(--accent);
+            box-shadow: 0 0 20px rgba(56, 189, 248, 0.15);
+        }
+
+        .btn-glow {
+            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
+            border: none;
+        }
+
+        .btn-glow:hover {
+            background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
+            color: #fff;
+            box-shadow: 0 0 25px rgba(99, 102, 241, 0.35);
+        }
+    </style>
 </head>
 <body>
 
-<div class="tv-container" id="tvContainer">
-  <div class="top-bar">
-    <div class="clock" id="clockDisplay">--:--</div>
-    <div class="channel-name">✦ INTERNET TV</div>
-  </div>
+    <!-- =========================================================== -->
+    <!-- 3. ОСНОВНОЙ HTML                                             -->
+    <!-- =========================================================== -->
+    <div class="cinema-grid">
 
-  <div class="video-wrap" id="videoWrap">
-    <iframe id="playerFrame" src="" allow="autoplay; fullscreen" allowfullscreen></iframe>
-    <div class="video-overlay"></div>
-  </div>
+        <!-- ЛЕВАЯ КОЛОНКА: ПЛЕЕР -->
+        <div class="video-section">
+            <div class="main-theater" id="playerContainer">
+                <div class="shield" id="shield"></div>
+                <!-- Плейсхолдер для VK Video -->
+                <div id="vk-iframe-placeholder"></div>
+            </div>
+        </div>
 
-  <div class="bottom-bar">
-    <div class="controls">
-      <button id="fullscreenBtn" class="ctrl-btn">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-          <polyline points="15 3 21 3 21 9"></polyline>
-          <polyline points="9 21 3 21 3 15"></polyline>
-          <line x1="21" y1="3" x2="14" y2="10"></line>
-          <line x1="3" y1="21" x2="10" y2="14"></line>
-        </svg>
-        <span>На весь экран</span>
-      </button>
-      <button id="muteBtn" class="ctrl-btn">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-          <line x1="23" y1="9" x2="17" y2="15"></line>
-          <line x1="17" y1="9" x2="23" y2="15"></line>
-        </svg>
-        <span id="muteLabel">🔊 Звук</span>
-      </button>
+        <!-- ПРАВАЯ КОЛОНКА: ИНФО + КНОПКИ -->
+        <div class="side-dashboard">
+            <div class="station-info">
+                <div class="badge-live">
+                    <div class="pulse-ring"></div>
+                    Эфир
+                </div>
+                <h1>INTERNET TV</h1>
+
+                <!-- ЧАСЫ -->
+                <div class="clock" id="clockDisplay">--:--:--</div>
+
+                <ul class="meta-list">
+                    <li>Сейчас в эфире: <strong id="currentShowTitle">Загрузка...</strong></li>
+                    <li>Качество: <strong>Ultra HD 4K</strong></li>
+                    <li>Онлайн: <strong><span id="onlineCount">0</span> чел.</strong></li>
+                </ul>
+            </div>
+
+            <div class="action-container">
+                <button class="btn-modern btn-glow" id="mute-btn">🔊 Включить звук</button>
+                <button class="btn-modern" id="fs-btn">📺 Полный экран</button>
+            </div>
+        </div>
     </div>
-    <span class="now-playing" id="nowPlaying">●</span>
-    <span class="live-badge">LIVE</span>
-  </div>
-</div>
 
-<script src="playlist.js"></script>
-<script src="player.js"></script>
+    <!-- =========================================================== -->
+    <!-- 4. ПОДКЛЮЧЕНИЕ VK VIDEO IFRAME API                         -->
+    <!-- =========================================================== -->
+    <script src="https://vk.com/js/api/openapi.js?169"></script>
+
+    <!-- =========================================================== -->
+    <!-- 5. ОСНОВНОЙ СКРИПТ                                          -->
+    <!-- =========================================================== -->
+    <script>
+        // ============================================================
+        // 📋 ПЛЕЙЛИСТ — ID ВИДЕО ИЗ VK
+        // Формат: oid (владелец) + id (видео)
+        // Например: https://vkvideo.ru/video-236922133_456239096
+        // oid = -123456, id = 789012
+        // ============================================================
+        const playlist = [
+            { oid: '-236922133', id: '456239096', title: 'Начало вещание!' },
+            { oid: '-217256769', id: '456239103', title: 'Чип и дейл спешат на помощь' },
+            { oid: '-217256769', id: '456239102', title: 'А4 Кто последний покинет кухню челлендж' }
+        ];
+
+        // ============================================================
+        // 🧠 ПЕРЕМЕННЫЕ
+        // ============================================================
+        let currentTrackIndex = 0;
+        let isMuted = true;
+        let player = null;
+        let playerReady = false;
+        let savedTime = 0;
+
+        // ============================================================
+        // ⏰ ЧАСЫ
+        // ============================================================
+        function updateClock() {
+            const now = new Date();
+            const h = String(now.getHours()).padStart(2, '0');
+            const m = String(now.getMinutes()).padStart(2, '0');
+            const s = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clockDisplay').textContent = h + ':' + m + ':' + s;
+        }
+        updateClock();
+        setInterval(updateClock, 1000);
+
+        // ============================================================
+        // ⏳ ВОССТАНОВЛЕНИЕ ВРЕМЕНИ ПРИ ПЕРЕЗАГРУЗКЕ
+        // ============================================================
+        function loadSavedState() {
+            const saved = localStorage.getItem('internet_tv_state');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.trackIndex !== undefined) {
+                        currentTrackIndex = data.trackIndex % playlist.length;
+                    }
+                    if (data.time) {
+                        savedTime = parseFloat(data.time) || 0;
+                    }
+                } catch (e) { /* тихо */ }
+            }
+        }
+
+        function saveCurrentState(time) {
+            try {
+                localStorage.setItem('internet_tv_state', JSON.stringify({
+                    trackIndex: currentTrackIndex,
+                    time: time || 0
+                }));
+            } catch (e) { /* тихо */ }
+        }
+
+        // ============================================================
+        // 🚀 СОЗДАНИЕ ПЛЕЕРА (VK Video)
+        // ============================================================
+        function createPlayer() {
+            const container = document.getElementById('playerContainer');
+            const placeholder = document.getElementById('vk-iframe-placeholder');
+            if (!placeholder) return;
+
+            const video = playlist[currentTrackIndex];
+            document.getElementById('currentShowTitle').textContent = video.title;
+
+            // Очищаем плейсхолдер
+            placeholder.innerHTML = '';
+
+            // Создаём iframe VK Video
+            const iframe = document.createElement('iframe');
+            iframe.src =
+                `https://vk.com/video_ext.php?oid=${video.oid}&id=${video.id}&hash=5d6e5c6d7b1e84&autoplay=1&mute=${isMuted ? 1 : 0}`;
+            iframe.width = '100%';
+            iframe.height = '100%';
+            iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture;';
+            iframe.allowFullscreen = true;
+            iframe.frameBorder = '0';
+            iframe.style.border = 'none';
+            iframe.style.width = '100%';
+            iframe.style.height = '100%';
+
+            placeholder.appendChild(iframe);
+
+            // Сохраняем ссылку на iframe как плеер
+            player = iframe;
+
+            // Имитация готовности плеера
+            playerReady = true;
+
+            // Сохраняем время каждые 5 секунд (имитация)
+            if (window._tvInterval) clearInterval(window._tvInterval);
+            window._tvInterval = setInterval(() => {
+                // VK Video не даёт API для получения времени, сохраняем прогресс приблизительно
+                // Можно сохранять только индекс трека
+                saveCurrentState(0);
+            }, 5000);
+
+            // Восстанавливаем щит (на случай, если его нет)
+            let shield = document.getElementById('shield');
+            if (!shield) {
+                shield = document.createElement('div');
+                shield.className = 'shield';
+                shield.id = 'shield';
+                container.appendChild(shield);
+            }
+
+            console.log('🎬 VK Video плеер загружен:', video.title);
+        }
+
+        // ============================================================
+        // 🔄 АВТОПЕРЕКЛЮЧЕНИЕ (имитация окончания видео)
+        // ============================================================
+        // VK Video не даёт событий окончания, поэтому переключаем по таймеру
+        // (длительность видео ~5-10 минут)
+        let trackTimer = null;
+
+        function startTrackTimer() {
+            if (trackTimer) clearTimeout(trackTimer);
+            // Переключаем через 8 минут (480 секунд)
+            trackTimer = setTimeout(() => {
+                currentTrackIndex++;
+                if (currentTrackIndex >= playlist.length) {
+                    currentTrackIndex = 0;
+                }
+                savedTime = 0;
+                saveCurrentState(0);
+                createPlayer();
+                startTrackTimer();
+            }, 480000);
+        }
+
+        // ============================================================
+        // 🔊 КНОПКА ЗВУКА (для VK Video работает через пересоздание)
+        // ============================================================
+        document.getElementById('mute-btn').addEventListener('click', function() {
+            isMuted = !isMuted;
+            if (isMuted) {
+                this.textContent = '🔊 Включить звук';
+            } else {
+                this.textContent = '🔇 Выключить звук';
+            }
+            // Пересоздаём плеер для применения mute
+            createPlayer();
+            startTrackTimer();
+        });
+
+        // ============================================================
+        // 📺 ПОЛНЫЙ ЭКРАН
+        // ============================================================
+        document.getElementById('fs-btn').addEventListener('click', function() {
+            const container = document.getElementById('playerContainer');
+            if (container.requestFullscreen) {
+                container.requestFullscreen();
+            } else if (container.webkitRequestFullscreen) {
+                container.webkitRequestFullscreen();
+            }
+        });
+
+        // ============================================================
+        // 🧹 СОХРАНЕНИЕ ПРИ ВЫХОДЕ
+        // ============================================================
+        window.addEventListener('beforeunload', function() {
+            saveCurrentState(0);
+        });
+
+        // ============================================================
+        // 🚀 ЗАПУСК
+        // ============================================================
+        loadSavedState();
+        createPlayer();
+        startTrackTimer();
+
+        // Имитация онлайн-зрителей
+        setInterval(() => {
+            const count = Math.floor(Math.random() * 50) + 15;
+            document.getElementById('onlineCount').textContent = count;
+        }, 15000);
+
+        console.log('📺 INTERNET TV загружен!');
+    </script>
+
 </body>
 </html>
