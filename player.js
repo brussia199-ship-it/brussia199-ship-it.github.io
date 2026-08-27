@@ -11,17 +11,71 @@
   var muteBtn = document.getElementById('muteBtn');
   var muteLabel = document.getElementById('muteLabel');
 
-  var currentIndex = 0;
-  var autoTimer = null;
-  var SWITCH_DELAY = 50000;
-  var isMuted = false;
-
   var playlist = window.PARSED_PLAYLIST || [];
+
+  // ============================================================
+  // СОСТОЯНИЕ (получаем с сервера)
+  // ============================================================
+  var currentIndex = 0;
+  var currentTime = 0;
+  var serverTimeOffset = 0;
+  var isSynced = false;
+
+  // Адрес сервера (если не на локальном сервере — поменяй)
+  var API_URL = 'state.php';
+
+  // ============================================================
+  // ЗАГРУЗКА СОСТОЯНИЯ С СЕРВЕРА
+  // ============================================================
+  function fetchState() {
+    fetch(API_URL + '?action=get&t=' + Date.now())
+      .then(function(response) { return response.json(); })
+      .then(function(state) {
+        if (state && state.index !== undefined) {
+          currentIndex = state.index;
+          currentTime = state.time || 0;
+          serverTimeOffset = Date.now() - (state.updated * 1000);
+          isSynced = true;
+          
+          console.log('📡 Состояние с сервера: видео #' + (currentIndex + 1) + 
+                      ', время: ' + Math.floor(currentTime) + 'с');
+          
+          // Загружаем видео
+          loadVideo(currentIndex, true);
+        }
+      })
+      .catch(function(err) {
+        console.warn('⚠️ Не удалось получить состояние с сервера:', err);
+        // Если сервер недоступен — начинаем с первого видео
+        currentIndex = 0;
+        currentTime = 0;
+        loadVideo(0, false);
+      });
+  }
+
+  // ============================================================
+  // ОТПРАВКА СОСТОЯНИЯ НА СЕРВЕР (администратор)
+  // ============================================================
+  function setState(index, time, key) {
+    var url = API_URL + '?action=set&index=' + index + '&time=' + time + '&key=' + key;
+    fetch(url)
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (data.status === 'ok') {
+          console.log('✅ Состояние обновлено на сервере');
+        } else {
+          console.warn('⚠️ Ошибка обновления:', data.message);
+        }
+      })
+      .catch(function(err) {
+        console.warn('⚠️ Не удалось обновить состояние:', err);
+      });
+  }
 
   // ============================================================
   // ЗАГРУЗКА ВИДЕО
   // ============================================================
-  function loadVideo(index) {
+  function loadVideo(index, keepPosition) {
     if (playlist.length === 0) {
       frame.src = '';
       nowPlayingEl.textContent = '⚠️ Нет видео';
@@ -36,22 +90,90 @@
     nowPlayingEl.classList.add('active');
 
     currentIndex = index;
+
+    // Пытаемся восстановить позицию
+    if (keepPosition && currentTime > 0) {
+      setTimeout(function() {
+        trySeekTo(currentTime);
+      }, 2000);
+    }
   }
 
+  // ============================================================
+  // ПЕРЕМОТКА В НУЖНОЕ ВРЕМЯ
+  // ============================================================
+  function trySeekTo(seconds) {
+    try {
+      var doc = frame.contentDocument || frame.contentWindow.document;
+      var videos = doc.querySelectorAll('video');
+      if (videos.length > 0) {
+        var video = videos[0];
+        if (video.duration && video.duration > seconds) {
+          video.currentTime = seconds;
+          console.log('⏱ Перемотка на ' + Math.floor(seconds) + 'с');
+        }
+      }
+    } catch(e) {}
+  }
+
+  // ============================================================
+  // СЛЕДУЮЩЕЕ ВИДЕО
+  // ============================================================
   function nextVideo() {
-    loadVideo(currentIndex + 1);
+    var next = (currentIndex + 1) % playlist.length;
+    currentTime = 0;
+    // Администраторский ключ (по умолчанию tv2024)
+    var adminKey = 'tv2024';
+    setState(next, 0, adminKey);
+    loadVideo(next, false);
     resetAutoTimer();
   }
 
   // ============================================================
-  // ТАЙМЕР
+  // СИНХРОНИЗАЦИЯ С СЕРВЕРОМ (каждые 5 секунд)
   // ============================================================
+  function syncWithServer() {
+    if (!isSynced) return;
+
+    // Сколько прошло времени с момента синхронизации
+    var elapsed = (Date.now() - serverTimeOffset) / 1000;
+    var currentServerTime = currentTime + elapsed;
+
+    // Отправляем на сервер наше текущее время
+    var url = API_URL + '?action=sync&time=' + currentServerTime + '&t=' + Date.now();
+    fetch(url)
+      .then(function(response) { return response.json(); })
+      .then(function(data) {
+        if (data.status === 'sync') {
+          // Сервер говорит, что мы отстаём — синхронизируемся
+          currentTime = data.time;
+          currentIndex = data.index;
+          serverTimeOffset = Date.now() - (currentTime * 1000);
+          
+          // Перематываем видео
+          trySeekTo(currentTime);
+          
+          console.log('🔄 Синхронизация: видео #' + (currentIndex + 1) + 
+                      ', время: ' + Math.floor(currentTime) + 'с');
+        }
+      })
+      .catch(function(err) {});
+  }
+
+  // ============================================================
+  // АВТОПЕРЕКЛЮЧЕНИЕ
+  // ============================================================
+  var autoTimer = null;
+  var SWITCH_DELAY = 50000;
+
   function resetAutoTimer() {
     if (autoTimer) {
       clearTimeout(autoTimer);
       autoTimer = null;
     }
     autoTimer = setTimeout(function() {
+      // Проверяем, не переключилось ли уже на сервере
+      fetchState();
       nextVideo();
     }, SWITCH_DELAY);
   }
@@ -67,70 +189,30 @@
   }
 
   // ============================================================
-  // ПОЛНЫЙ ЭКРАН — РАБОТАЕТ
+  // ПОЛНЫЙ ЭКРАН
   // ============================================================
   function toggleFullscreen() {
     var el = tvContainer;
-
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-      // Открываем на весь экран
-      if (el.requestFullscreen) {
-        el.requestFullscreen();
-      } else if (el.webkitRequestFullscreen) {
-        el.webkitRequestFullscreen();
-      } else if (el.msRequestFullscreen) {
-        el.msRequestFullscreen();
-      }
+      if (el.requestFullscreen) el.requestFullscreen();
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      else if (el.msRequestFullscreen) el.msRequestFullscreen();
       fullscreenBtn.classList.add('active');
     } else {
-      // Закрываем
-      if (document.exitFullscreen) {
-        document.exitFullscreen();
-      } else if (document.webkitExitFullscreen) {
-        document.webkitExitFullscreen();
-      } else if (document.msExitFullscreen) {
-        document.msExitFullscreen();
-      }
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (document.msExitFullscreen) document.msExitFullscreen();
       fullscreenBtn.classList.remove('active');
     }
   }
 
   // ============================================================
-  // ЗВУК — РАБОТАЕТ (через глобальный аудиоконтекст)
+  // ЗВУК
   // ============================================================
+  var isMuted = false;
+
   function toggleMute() {
     isMuted = !isMuted;
-
-    // Пробуем найти видео внутри iframe
-    try {
-      var iframeWindow = frame.contentWindow;
-      var iframeDoc = frame.contentDocument || iframeWindow.document;
-      
-      // Ищем все video-элементы внутри iframe
-      var videos = iframeDoc.querySelectorAll('video');
-      if (videos.length > 0) {
-        for (var i = 0; i < videos.length; i++) {
-          videos[i].muted = isMuted;
-        }
-        console.log(isMuted ? '🔇 Звук выключен' : '🔊 Звук включен');
-      } else {
-        // Если видео не нашли — пробуем через 1 секунду ещё раз
-        setTimeout(function() {
-          try {
-            var videos2 = iframeDoc.querySelectorAll('video');
-            for (var j = 0; j < videos2.length; j++) {
-              videos2[j].muted = isMuted;
-            }
-          } catch(e) {}
-        }, 1000);
-      }
-    } catch(e) {
-      console.warn('Не удалось управлять звуком через iframe:', e);
-      // Если не получилось — показываем уведомление
-      showNotification(isMuted ? '🔇 Звук выключен (вручную в плеере)' : '🔊 Звук включен (вручную в плеере)');
-    }
-
-    // Меняем иконку
     if (isMuted) {
       muteBtn.classList.add('muted');
       muteLabel.textContent = '🔇 Без звука';
@@ -138,97 +220,74 @@
       muteBtn.classList.remove('muted');
       muteLabel.textContent = '🔊 Звук';
     }
+    tryMuteAllVideos(isMuted);
   }
 
-  // ============================================================
-  // УВЕДОМЛЕНИЕ (если звук не работает)
-  // ============================================================
-  function showNotification(text) {
-    var old = document.querySelector('.toast-notification');
-    if (old) old.remove();
-
-    var div = document.createElement('div');
-    div.className = 'toast-notification';
-    div.textContent = text;
-    div.style.cssText = 
-      'position:fixed;bottom:100px;left:50%;transform:translateX(-50%);' +
-      'background:#1a1a1a;color:#ccc;padding:10px 24px;border-radius:40px;' +
-      'border:1px solid #3a3a3a;font-family:sans-serif;font-size:0.9rem;' +
-      'z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,0.8);' +
-      'transition:opacity 0.3s;opacity:1;';
-    document.body.appendChild(div);
-
+  function tryMuteAllVideos(muted) {
+    try {
+      var doc = frame.contentDocument || frame.contentWindow.document;
+      var videos = doc.querySelectorAll('video');
+      for (var i = 0; i < videos.length; i++) {
+        videos[i].muted = muted;
+      }
+    } catch(e) {}
+    
     setTimeout(function() {
-      div.style.opacity = '0';
-      setTimeout(function() { div.remove(); }, 400);
-    }, 2500);
+      try {
+        var doc2 = frame.contentDocument || frame.contentWindow.document;
+        var videos2 = doc2.querySelectorAll('video');
+        for (var j = 0; j < videos2.length; j++) {
+          videos2[j].muted = muted;
+        }
+      } catch(e) {}
+    }, 1000);
   }
 
   // ============================================================
   // ОБРАБОТЧИКИ
   // ============================================================
 
-  // Полный экран
   fullscreenBtn.addEventListener('click', toggleFullscreen);
-
-  // Двойной клик по видео = полный экран
   videoWrap.addEventListener('dblclick', toggleFullscreen);
-
-  // Звук
   muteBtn.addEventListener('click', toggleMute);
 
-  // Сброс таймера
   videoWrap.addEventListener('mousemove', resetAutoTimer);
   videoWrap.addEventListener('click', resetAutoTimer);
   videoWrap.addEventListener('touchstart', resetAutoTimer);
 
-  // Отслеживаем изменения полноэкранного режима
   document.addEventListener('fullscreenchange', function() {
-    if (document.fullscreenElement) {
-      fullscreenBtn.classList.add('active');
-    } else {
-      fullscreenBtn.classList.remove('active');
-    }
+    if (document.fullscreenElement) fullscreenBtn.classList.add('active');
+    else fullscreenBtn.classList.remove('active');
   });
-
   document.addEventListener('webkitfullscreenchange', function() {
-    if (document.webkitFullscreenElement) {
-      fullscreenBtn.classList.add('active');
-    } else {
-      fullscreenBtn.classList.remove('active');
-    }
+    if (document.webkitFullscreenElement) fullscreenBtn.classList.add('active');
+    else fullscreenBtn.classList.remove('active');
   });
 
   // ============================================================
   // ЗАПУСК
   // ============================================================
+
   updateClock();
   setInterval(updateClock, 30000);
 
-  if (playlist.length > 0) {
-    loadVideo(0);
-    resetAutoTimer();
-    console.log('🎬 INTERNET TV запущен · ' + playlist.length + ' видео');
-  } else {
-    nowPlayingEl.textContent = '⚠️ Добавь видео в playlist.js';
-  }
+  // Загружаем состояние с сервера
+  fetchState();
 
-  // Пробуем найти видео в iframe после загрузки
+  // Синхронизация каждые 5 секунд
+  setInterval(syncWithServer, 5000);
+
+  // Автопереключение
+  resetAutoTimer();
+
+  // При загрузке iframe восстанавливаем позицию
   frame.addEventListener('load', function() {
     setTimeout(function() {
-      try {
-        var doc = frame.contentDocument || frame.contentWindow.document;
-        var videos = doc.querySelectorAll('video');
-        if (videos.length > 0) {
-          console.log('✅ Найдено ' + videos.length + ' видео-элементов в iframe');
-          // Применяем текущее состояние звука
-          for (var i = 0; i < videos.length; i++) {
-            videos[i].muted = isMuted;
-          }
-        }
-      } catch(e) {}
-    }, 1500);
+      trySeekTo(currentTime);
+      tryMuteAllVideos(isMuted);
+    }, 2000);
   });
 
-  console.log('✅ Кнопки работают: Полный экран и Звук');
+  console.log('📡 INTERNET TV работает в реальном времени через сервер');
+  console.log('🔑 Ключ администратора: tv2024');
 })();
