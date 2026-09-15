@@ -1,1073 +1,180 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>INTERNET TV — Прямой эфир</title>
-
-    <!-- =========================================================== -->
-    <!-- 1. ЗАЩИТА ОТ ИНСТРУМЕНТОВ РАЗРАБОТЧИКА                      -->
-    <!-- =========================================================== -->
-    <script>
-        (function() {
-            'use strict';
-
-            document.addEventListener('keydown', function(e) {
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-                if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'J' || e.key === 'C')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-                if (e.ctrlKey && (e.key === 'U' || e.key === 'S' || e.key === 'P')) {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    return false;
-                }
-                if (e.key === 'F1') {
-                    e.preventDefault();
-                    return false;
-                }
-            }, true);
-
-            document.addEventListener('contextmenu', function(e) {
-                e.preventDefault();
-                return false;
-            }, true);
-
-            window.addEventListener('keydown', function(e) {
-                if (e.ctrlKey && e.shiftKey) {
-                    e.preventDefault();
-                    return false;
-                }
-                if (e.metaKey && e.altKey && e.key === 'I') {
-                    e.preventDefault();
-                    return false;
-                }
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                    return false;
-                }
-            }, true);
-
-            window.addEventListener('keyup', function(e) {
-                if (e.key === 'F12') {
-                    e.preventDefault();
-                    return false;
-                }
-            }, true);
-
-            console.log('🛡️ Защита активирована!');
-        })();
-    </script>
-
-    <style>
-        /* =========================================================== */
-        /* 2. СТИЛИ                                                   */
-        /* =========================================================== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --bg-main: #020617;
-            --panel-bg: rgba(15, 23, 42, 0.6);
-            --accent: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.25);
-            --text-main: #f8fafc;
-        }
-
-        body {
-            background-color: var(--bg-main);
-            background-image:
-                radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
-                radial-gradient(circle at 20% 80%, rgba(14, 165, 233, 0.12) 0%, transparent 50%);
-            color: var(--text-main);
-            font-family: system-ui, -apple-system, -apple-system, 'Segoe UI', Roboto, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 12px;
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-tap-highlight-color: transparent;
-        }
-
-        .cinema-grid {
-            display: grid;
-            grid-template-columns: 1fr 320px;
-            gap: 20px;
-            width: 100%;
-            max-width: 1100px;
-        }
-
-        /* ===== АДАПТИВ ДЛЯ МОБИЛЬНЫХ ===== */
-        @media (max-width: 800px) {
-            .cinema-grid {
-                grid-template-columns: 1fr;
-                gap: 16px;
-            }
-            body {
-                padding: 8px;
-            }
-            .side-dashboard {
-                padding: 16px;
-            }
-            .station-info h1 {
-                font-size: 22px;
-            }
-            .meta-list li {
-                padding: 6px 0;
-                font-size: 12px;
-            }
-            .clock {
-                font-size: 18px;
-            }
-            .btn-modern {
-                padding: 12px;
-                font-size: 11px;
-            }
-        }
-
-        @media (max-width: 450px) {
-            .side-dashboard {
-                padding: 12px;
-                border-radius: 16px;
-            }
-            .station-info h1 {
-                font-size: 18px;
-                margin: 6px 0 0 0;
-            }
-            .badge-live {
-                font-size: 9px;
-                padding: 3px 10px;
-            }
-            .meta-list li {
-                padding: 5px 0;
-                font-size: 11px;
-            }
-            .meta-list {
-                margin: 10px 0;
-            }
-            .clock {
-                font-size: 15px;
-                margin: 4px 0 6px 0;
-            }
-            .btn-modern {
-                padding: 10px;
-                font-size: 10px;
-                border-radius: 10px;
-                letter-spacing: 1px;
-            }
-            .action-container {
-                gap: 6px;
-            }
-        }
-
-        /* ПЛЕЕР */
-        .video-section {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
-
-        .main-theater {
-            position: relative;
-            background: #000;
-            border-radius: 18px;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            box-shadow: 0 20px 50px -15px rgba(0, 0, 0, 0.8), 0 0 40px var(--accent-glow);
-            aspect-ratio: 16 / 9;
-            overflow: hidden;
-            width: 100%;
-        }
-
-        .main-theater iframe,
-        .main-theater #vk-iframe-placeholder {
-            width: 100%;
-            height: 100%;
-            border: none;
-        }
-
-        .shield {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: 50;
-            cursor: default;
-            pointer-events: auto;
-            background: transparent;
-        }
-
-        /* САЙДБАР */
-        .side-dashboard {
-            background: var(--panel-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            border-radius: 20px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
-        }
-
-        .station-info h1 {
-            font-size: 26px;
-            font-weight: 800;
-            letter-spacing: 2px;
-            margin: 8px 0 0 0;
-            background: linear-gradient(135deg, #fff 35%, var(--accent));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .badge-live {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            background: rgba(255, 165, 0, 0.12);
-            color: #FF8C00;
-            padding: 3px 12px;
-            border-radius: 8px;
-            font-size: 10px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            border: 1px solid rgba(255, 165, 0, 0.2);
-        }
-
-        .pulse-ring {
-            width: 5px;
-            height: 5px;
-            background: #FF8C00;
-            border-radius: 50%;
-            animation: live-glow 1.5s infinite;
-        }
-
-        @keyframes live-glow {
-            0% {
-                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0.7);
-            }
-            70% {
-                box-shadow: 0 0 0 6px rgba(255, 165, 0, 0);
-            }
-            100% {
-                box-shadow: 0 0 0 0 rgba(255, 165, 0, 0);
-            }
-        }
-
-        .clock {
-            font-size: 22px;
-            font-weight: 700;
-            color: var(--accent);
-            letter-spacing: 1px;
-            text-align: center;
-            margin: 4px 0 8px 0;
-            font-variant-numeric: tabular-nums;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            padding: 4px 8px;
-            border-radius: 8px;
-        }
-
-        .clock:hover {
-            background: rgba(56, 189, 248, 0.05);
-        }
-
-        .meta-list {
-            margin: 12px 0 16px 0;
-            padding: 0;
-            list-style: none;
-            font-size: 13px;
-            color: #94a3b8;
-        }
-
-        .meta-list li {
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
-            display: flex;
-            justify-content: space-between;
-        }
-
-        .meta-list li:last-child {
-            border-bottom: none;
-        }
-
-        .meta-list strong {
-            color: #f1f5f9;
-            font-weight: 600;
-        }
-
-        /* КНОПКИ */
-        .action-container {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .btn-modern {
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            color: #fff;
-            padding: 13px;
-            border-radius: 12px;
-            font-size: 12px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 1.2px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            -webkit-tap-highlight-color: transparent;
-            touch-action: manipulation;
-        }
-
-        .btn-modern:active {
-            transform: scale(0.97);
-        }
-
-        .btn-modern:hover {
-            background: rgba(56, 189, 248, 0.08);
-            border-color: var(--accent);
-            color: var(--accent);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
-        }
-
-        .btn-glow {
-            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
-            border: none;
-            color: #fff;
-        }
-
-        .btn-glow:hover {
-            background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
-            color: #fff;
-            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
-        }
-
-        .btn-glow:active {
-            background: linear-gradient(135deg, #0369a1 0%, #4338ca 100%);
-        }
-
-        /* Двойные кнопки в ряд */
-        .btn-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-        }
-
-        .btn-row .btn-modern {
-            padding: 13px 8px;
-            font-size: 11px;
-            letter-spacing: 0.8px;
-        }
-
-        @media (max-width: 450px) {
-            .btn-row {
-                gap: 6px;
-            }
-            .btn-row .btn-modern {
-                padding: 10px 6px;
-                font-size: 9px;
-                letter-spacing: 0.5px;
-                border-radius: 10px;
-            }
-        }
-
-        /* =========================================================== */
-        /* 3. АДМИН-ПАНЕЛЬ                                            */
-        /* =========================================================== */
-        .admin-overlay {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.85);
-            backdrop-filter: blur(10px);
-            z-index: 9999;
-            justify-content: center;
-            align-items: center;
-            padding: 20px;
-        }
-
-        .admin-overlay.active {
-            display: flex;
-        }
-
-        .admin-panel {
-            background: rgba(15, 23, 42, 0.95);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 24px;
-            padding: 32px;
-            max-width: 500px;
-            width: 100%;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8);
-            position: relative;
-        }
-
-        .admin-panel h2 {
-            color: var(--accent);
-            font-size: 22px;
-            margin-bottom: 8px;
-            letter-spacing: 1px;
-        }
-
-        .admin-panel .subtitle {
-            color: #94a3b8;
-            font-size: 13px;
-            margin-bottom: 24px;
-        }
-
-        .admin-panel label {
-            display: block;
-            color: #e2e8f0;
-            font-size: 13px;
-            font-weight: 600;
-            margin-bottom: 6px;
-        }
-
-        .admin-panel input,
-        .admin-panel textarea {
-            width: 100%;
-            padding: 12px 14px;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 12px;
-            color: #fff;
-            font-size: 14px;
-            font-family: inherit;
-            transition: all 0.2s ease;
-            margin-bottom: 16px;
-        }
-
-        .admin-panel input:focus,
-        .admin-panel textarea:focus {
-            outline: none;
-            border-color: var(--accent);
-            box-shadow: 0 0 20px rgba(56, 189, 248, 0.1);
-        }
-
-        .admin-panel textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
-        .admin-panel .btn-submit {
-            width: 100%;
-            padding: 14px;
-            background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%);
-            border: none;
-            border-radius: 12px;
-            color: #fff;
-            font-size: 14px;
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 1.5px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-        }
-
-        .admin-panel .btn-submit:hover {
-            background: linear-gradient(135deg, #38bdf8 0%, #6366f1 100%);
-            box-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
-        }
-
-        .admin-panel .btn-close {
-            position: absolute;
-            top: 16px;
-            right: 20px;
-            background: none;
-            border: none;
-            color: #94a3b8;
-            font-size: 24px;
-            cursor: pointer;
-            transition: color 0.2s;
-        }
-
-        .admin-panel .btn-close:hover {
-            color: #fff;
-        }
-
-        .admin-panel .status-msg {
-            margin-top: 12px;
-            padding: 10px;
-            border-radius: 8px;
-            font-size: 13px;
-            display: none;
-        }
-
-        .admin-panel .status-msg.success {
-            display: block;
-            background: rgba(34, 197, 94, 0.15);
-            color: #4ade80;
-            border: 1px solid rgba(34, 197, 94, 0.2);
-        }
-
-        .admin-panel .status-msg.error {
-            display: block;
-            background: rgba(239, 68, 68, 0.15);
-            color: #f87171;
-            border: 1px solid rgba(239, 68, 68, 0.2);
-        }
-
-        .admin-panel .video-list {
-            margin-top: 16px;
-            max-height: 150px;
-            overflow-y: auto;
-        }
-
-        .admin-panel .video-list-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 12px;
-            background: rgba(255, 255, 255, 0.03);
-            border-radius: 8px;
-            margin-bottom: 4px;
-            font-size: 13px;
-            color: #e2e8f0;
-        }
-
-        .admin-panel .video-list-item .remove-btn {
-            background: none;
-            border: none;
-            color: #ef4444;
-            cursor: pointer;
-            font-size: 16px;
-            padding: 0 4px;
-        }
-
-        .admin-panel .video-list-item .remove-btn:hover {
-            color: #dc2626;
-        }
-
-        .admin-panel .hint {
-            color: #64748b;
-            font-size: 12px;
-            margin-top: -12px;
-            margin-bottom: 12px;
-        }
-
-        /* Стили для ввода пароля */
-        .password-section {
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .password-section .password-input-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        .password-section .password-input-row input {
-            flex: 1;
-            margin-bottom: 0;
-        }
-
-        .password-section .password-input-row .btn-check {
-            padding: 12px 20px;
-            background: rgba(56, 189, 248, 0.15);
-            border: 1px solid rgba(56, 189, 248, 0.2);
-            border-radius: 12px;
-            color: var(--accent);
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            white-space: nowrap;
-        }
-
-        .password-section .password-input-row .btn-check:hover {
-            background: rgba(56, 189, 248, 0.25);
-        }
-
-        .password-section .password-status {
-            margin-top: 8px;
-            font-size: 13px;
-            display: none;
-        }
-
-        .password-section .password-status.error {
-            display: block;
-            color: #f87171;
-        }
-
-        .password-section .password-status.success {
-            display: block;
-            color: #4ade80;
-        }
-
-        .admin-content {
-            display: none;
-        }
-
-        .admin-content.active {
-            display: block;
-        }
-
-        .password-lock-icon {
-            text-align: center;
-            font-size: 32px;
-            margin-bottom: 8px;
-            opacity: 0.6;
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#08090d">
+<meta name="color-scheme" content="dark">
+<title>Pawn Compiler</title>
+<style>
+:root{--bg:#08090d;--panel:#0e1016;--panel2:#12151d;--panel3:#171b24;--line:#252a35;--line2:#303646;--text:#f5f7fb;--muted:#8e97aa;--muted2:#667083;--accent:#8a6cff;--accent2:#36c8ff;--good:#41d391;--warn:#ffbf62;--bad:#ff667d;--radius:16px;--shadow:0 20px 70px rgba(0,0,0,.35)}
+*{box-sizing:border-box}html,body{margin:0;min-height:100%;background:radial-gradient(900px 450px at 78% -5%,rgba(108,76,255,.16),transparent 62%),radial-gradient(800px 420px at 15% 100%,rgba(38,185,255,.07),transparent 62%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}body{overflow:hidden}button,input,textarea,select{font:inherit}button{cursor:pointer}.hidden{display:none!important}
+.app{height:100vh;height:100dvh;display:grid;grid-template-columns:248px 1fr;grid-template-rows:68px 1fr}.sidebar{grid-row:1/3;background:rgba(10,11,16,.9);border-right:1px solid var(--line);padding:14px 12px 12px;display:flex;flex-direction:column;backdrop-filter:blur(20px);min-width:0}.brand{height:42px;display:flex;align-items:center;gap:10px;padding:0 10px;margin-bottom:15px}.brand-mark{width:34px;height:34px;border-radius:11px;display:grid;place-items:center;font-weight:950;letter-spacing:-.08em;background:linear-gradient(135deg,#967bff,#4d8cff);box-shadow:0 9px 28px rgba(104,95,255,.22);position:relative;overflow:hidden}.brand-mark:after{content:"";position:absolute;width:55px;height:2px;background:rgba(255,255,255,.65);transform:translateX(-80px) rotate(-25deg);animation:sheen 4.5s infinite}.brand-name{font-weight:850;font-size:14px}.brand-sub{display:block;color:var(--muted2);font-size:10px;margin-top:1px;font-weight:650;letter-spacing:.05em}.nav-label{padding:8px 10px;color:var(--muted2);font-size:10px;letter-spacing:.13em;text-transform:uppercase}.nav{display:grid;gap:4px}.nav button,.bottom button{border:0;background:transparent;color:var(--muted);border-radius:11px;text-align:left;padding:10px 11px;display:flex;align-items:center;gap:11px;font-size:12px;font-weight:700}.nav button:hover,.nav button.active,.bottom button.active{background:#151923;color:#fff}.nav-icon{width:23px;display:grid;place-items:center;color:inherit;font-size:14px}.side-spacer{flex:1}.side-card{border:1px solid var(--line);background:linear-gradient(145deg,#0f121a,#0b0d12);border-radius:14px;padding:12px;margin:10px 2px}.side-card-title{font-size:10px;color:var(--muted2);text-transform:uppercase;letter-spacing:.11em}.side-card b{display:block;margin-top:7px;font-size:13px}.side-card span{display:block;color:var(--muted);font-size:10px;line-height:1.45;margin-top:4px}
+.topbar{grid-column:2;display:flex;align-items:center;justify-content:space-between;padding:0 20px;border-bottom:1px solid var(--line);background:rgba(8,10,14,.78);backdrop-filter:blur(20px);min-width:0}.crumbs{display:flex;align-items:center;gap:8px;min-width:0}.crumbs b{font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.crumbs span{color:var(--muted2);font-size:12px}.top-actions{display:flex;align-items:center;gap:8px}.icon-btn,.btn{border:1px solid var(--line);background:#11141b;color:#e7ebf3;border-radius:11px;min-height:38px;padding:0 12px;font-weight:750}.icon-btn{width:38px;padding:0}.btn:hover,.icon-btn:hover{border-color:var(--line2);background:#161a23}.btn.primary{border-color:transparent;background:linear-gradient(135deg,#7d61ff,#4e8cff);box-shadow:0 10px 26px rgba(93,84,255,.25)}.btn.danger{color:#ff9aab}.status-chip{display:flex;align-items:center;gap:7px;border:1px solid var(--line);padding:8px 9px;border-radius:10px;background:#0f1218;color:var(--muted);font-size:10px}.dot{width:7px;height:7px;border-radius:50%;background:var(--good);box-shadow:0 0 12px rgba(65,211,145,.45)}
+.main{grid-column:2;overflow:auto;padding:22px 22px 30px}.view{display:none;max-width:1400px;margin:0 auto}.view.active{display:block}.hero{border:1px solid var(--line);border-radius:20px;background:linear-gradient(135deg,rgba(18,21,30,.96),rgba(12,14,20,.96));padding:25px;position:relative;overflow:hidden;box-shadow:var(--shadow)}.hero:before{content:"";position:absolute;inset:-40%;background:conic-gradient(from 30deg,transparent 0 68%,rgba(119,88,255,.12) 73%,transparent 78%);animation:spin 10s linear infinite}.hero:after{content:"SA-MP • PAWN • BUILD SYSTEM";position:absolute;right:20px;top:17px;color:#6d75851d;font:800 9px/1 monospace;letter-spacing:.14em}.hero>*{position:relative}.eyebrow{display:inline-flex;align-items:center;gap:8px;color:#a8b0c0;font-size:10px;font-weight:800;letter-spacing:.14em;text-transform:uppercase}.eyebrow .dot{background:var(--accent2);box-shadow:0 0 12px rgba(54,200,255,.5)}.hero h1{font-size:34px;line-height:1.02;letter-spacing:-.055em;margin:11px 0 9px;max-width:720px}.glitch{position:relative;display:inline-block}.glitch:before,.glitch:after{content:attr(data-text);position:absolute;inset:0;pointer-events:none}.glitch:before{left:2px;color:rgba(54,200,255,.55);clip-path:inset(0 0 52% 0);animation:glitchA 3.2s infinite}.glitch:after{left:-2px;color:rgba(255,77,194,.45);clip-path:inset(54% 0 0 0);animation:glitchB 2.7s infinite}.hero p{margin:0;color:var(--muted);max-width:760px;line-height:1.6;font-size:13px}.hero-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}.drop{margin-top:18px;border:1px dashed #42495b;border-radius:15px;padding:18px;display:flex;align-items:center;gap:14px;background:#0e1219;transition:.2s}.drop:hover,.drop.drag{border-color:#7e68ff;background:#131327;box-shadow:0 14px 38px rgba(83,71,190,.16)}.drop-icon{width:44px;height:44px;border-radius:12px;background:#181d28;display:grid;place-items:center;font-size:19px}.drop b{font-size:12px}.drop span{display:block;color:var(--muted2);font-size:10px;margin-top:3px}.drop-right{margin-left:auto}.quick-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:13px}.quick{border:1px solid var(--line);background:#0d1016;border-radius:14px;padding:14px;min-height:108px}.quick .q{font-size:17px}.quick b{display:block;margin-top:14px;font-size:12px}.quick span{display:block;color:var(--muted);font-size:10px;line-height:1.45;margin-top:4px}.section-head{display:flex;align-items:end;justify-content:space-between;margin:24px 2px 10px}.section-head h2{font-size:15px;margin:0;letter-spacing:-.02em}.section-head span{font-size:10px;color:var(--muted2);letter-spacing:.11em;text-transform:uppercase}
+.workspace-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}.card{border:1px solid var(--line);background:rgba(14,17,23,.92);border-radius:16px;overflow:hidden}.card-head{min-height:52px;padding:0 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:10px}.card-title{font-weight:800;font-size:12px}.card-sub{color:var(--muted2);font-size:10px}.card-body{padding:14px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}.stat{padding:13px;border:1px solid var(--line);background:#0d1016;border-radius:13px}.stat b{font-size:22px;letter-spacing:-.04em}.stat span{display:block;font-size:10px;color:var(--muted2);margin-top:5px}.meter{height:7px;background:#191e27;border-radius:999px;overflow:hidden;margin-top:12px}.meter>i{display:block;height:100%;width:0;background:linear-gradient(90deg,#7d61ff,#36c8ff);border-radius:inherit;transition:width .5s}.file-toolbar{display:flex;gap:8px;flex-wrap:wrap}.search{height:36px;min-width:0;width:210px;background:#0b0e13;border:1px solid var(--line);color:#fff;border-radius:10px;padding:0 10px}.tree{max-height:420px;overflow:auto;padding:7px}.file-row{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:9px;color:#cdd4df;font-size:11px}.file-row:hover{background:#151a23}.file-row.active{background:#191d2a;color:#fff}.file-row .file-type{width:23px;color:#8790a1}.file-row .path{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.file-row .pill{margin-left:auto;color:#7f8898;border:1px solid var(--line);border-radius:999px;padding:3px 6px;font-size:9px}.folder{display:flex;align-items:center;gap:7px;padding:9px 8px 7px;color:#9aa3b4;font-size:10px;font-weight:850;text-transform:uppercase;letter-spacing:.08em}.activity{display:grid;gap:7px}.activity-item{display:flex;align-items:center;gap:10px;border:1px solid var(--line);background:#0d1015;border-radius:12px;padding:10px}.activity-item .mini-dot{width:7px;height:7px;border-radius:50%}.mini-dot.good{background:var(--good)}.mini-dot.cyan{background:var(--accent2)}.mini-dot.pink{background:#ff5bcf}.activity-item b{font-size:11px}.activity-item span{display:block;color:var(--muted2);font-size:9px;margin-top:3px}.build-controls{display:grid;grid-template-columns:1.2fr .8fr;gap:10px}.field label{display:block;color:var(--muted2);font-size:9px;text-transform:uppercase;letter-spacing:.1em;margin:0 0 6px}.field input,.field select,.field textarea{width:100%;background:#0b0e13;color:#fff;border:1px solid var(--line);border-radius:10px;padding:10px 11px;outline:none}.field textarea{min-height:76px;resize:vertical}.field input:focus,.field select:focus,.field textarea:focus{border-color:#5f5a90}.checks{display:flex;flex-wrap:wrap;gap:7px}.check{border:1px solid var(--line);border-radius:9px;padding:8px 9px;color:#aeb6c4;font-size:10px;background:#0b0e13}.check input{accent-color:#7b61ff}.terminal{background:#090b10;min-height:290px;padding:14px;font:11px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;color:#bfc8d8;white-space:pre-wrap;overflow:auto}.terminal .good{color:var(--good)}.terminal .warn{color:var(--warn)}.terminal .bad{color:var(--bad)}.build-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:10px}.editor-wrap{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#080a0f}.editor-top{display:flex;align-items:center;gap:8px;padding:8px;border-bottom:1px solid var(--line);background:#0d1016}.tabs{display:flex;gap:5px;overflow:auto}.tab{border:1px solid var(--line);background:#11141b;color:#8d96a7;padding:7px 10px;border-radius:9px;font-size:10px;white-space:nowrap}.tab.active{color:#fff;background:#1a1f2b}.editor{display:grid;grid-template-columns:52px 1fr;min-height:510px}.lines{padding:15px 9px;text-align:right;color:#4e5768;background:#0b0e13;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;user-select:none;overflow:hidden;border-right:1px solid #161a22}.code{width:100%;height:510px;resize:none;border:0;outline:0;background:#080a0f;color:#dce4f2;padding:15px 15px;font:11px/1.6 ui-monospace,SFMono-Regular,Consolas,monospace;tab-size:4}.settings-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}.setting{padding:15px;border:1px solid var(--line);border-radius:14px;background:#0e1117}.setting b{font-size:12px}.setting p{color:var(--muted);font-size:10px;line-height:1.5;margin:5px 0 12px}.setting select{width:100%;height:38px;border-radius:10px;border:1px solid var(--line);background:#0b0e13;color:#fff;padding:0 10px}.mobile-bottom{display:none}.toast{position:fixed;left:50%;bottom:22px;transform:translate(-50%,20px);background:#161b25;border:1px solid var(--line2);border-radius:12px;padding:10px 13px;color:#fff;font-size:11px;opacity:0;pointer-events:none;transition:.24s;z-index:50;box-shadow:var(--shadow)}.toast.show{opacity:1;transform:translate(-50%,0)}.modal{position:fixed;inset:0;background:rgba(0,0,0,.55);display:grid;place-items:center;padding:18px;z-index:40}.modal-card{width:min(560px,100%);border:1px solid var(--line2);background:#0e1118;border-radius:18px;box-shadow:var(--shadow);overflow:hidden}.modal-head,.modal-foot{padding:13px 15px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}.modal-foot{border-top:1px solid var(--line);border-bottom:0;justify-content:flex-end;gap:8px}.modal-body{padding:15px;color:#abb4c4;font-size:12px;line-height:1.6}.scanline{position:fixed;inset:0;pointer-events:none;opacity:.045;background:repeating-linear-gradient(0deg,#fff 0 1px,transparent 1px 4px);mix-blend-mode:overlay;z-index:60}
+@keyframes sheen{0%,72%{transform:translateX(-80px)}82%,100%{transform:translateX(160px)}}@keyframes spin{to{transform:rotate(360deg)}}@keyframes glitchA{0%,84%,100%{transform:translate(0)}86%{transform:translate(3px,-1px)}89%{transform:translate(-2px,1px)}}@keyframes glitchB{0%,77%,100%{transform:translate(0)}80%{transform:translate(-3px,1px)}84%{transform:translate(2px,-1px)}}
+@media(max-width:980px){.app{grid-template-columns:1fr;grid-template-rows:62px 1fr}.sidebar{display:none}.topbar{grid-column:1;padding:0 12px}.main{grid-column:1;padding:14px 14px 82px}.hero{padding:20px}.hero h1{font-size:28px}.quick-grid{grid-template-columns:repeat(2,1fr)}.workspace-grid,.settings-grid,.build-controls{grid-template-columns:1fr}.mobile-bottom{display:flex;position:fixed;left:0;right:0;bottom:0;height:66px;padding-bottom:env(safe-area-inset-bottom);background:rgba(10,12,17,.94);backdrop-filter:blur(18px);border-top:1px solid var(--line);z-index:30;justify-content:space-around}.bottom button{min-width:18%;justify-content:center;flex-direction:column;text-align:center;padding:8px 5px;font-size:9px}.top-actions .desktop-only{display:none}.drop{align-items:flex-start}.drop-right{margin-left:0}.editor{min-height:430px}.code{height:430px}.lines{min-height:430px}}
+@media(max-width:560px){.hero h1{font-size:25px}.hero p{font-size:12px}.quick{min-height:98px}.search{width:100%}.file-toolbar{display:grid;grid-template-columns:1fr}.stats{gap:6px}.stat{padding:11px}.stat b{font-size:19px}.build-actions{justify-content:stretch}.build-actions .btn{flex:1}.topbar .status-chip{display:none}.crumbs span{display:none}}
+</style>
 </head>
 <body>
-
-    <!-- =========================================================== -->
-    <!-- 3. ОСНОВНОЙ HTML                                             -->
-    <!-- =========================================================== -->
-    <div class="cinema-grid">
-
-        <!-- ЛЕВАЯ КОЛОНКА: ПЛЕЕР -->
-        <div class="video-section">
-            <div class="main-theater" id="playerContainer">
-                <div class="shield" id="shield"></div>
-                <div id="vk-iframe-placeholder"></div>
-            </div>
-        </div>
-
-        <!-- ПРАВАЯ КОЛОНКА -->
-        <div class="side-dashboard">
-            <div class="station-info">
-                <div class="badge-live">
-                    <div class="pulse-ring"></div>
-                    Технические работы
-                </div>
-                <h1>INTERNET TV</h1>
-
-                <div class="clock" id="clockDisplay">--:--:--</div>
-
-                <ul class="meta-list">
-                    <li>Сейчас в эфире: <strong id="currentShowTitle">Загрузка...</strong></li>
-                    <li>В приложении есть недоработки</li>
-                </ul>
-            </div>
-
-            <div class="action-container">
-                <div class="btn-row">
-                    <button class="btn-modern btn-glow" id="fs-btn">📺 На весь экран</button>
-                    <button class="btn-modern" id="mute-btn">🔊 Звук</button>
-                </div>
-            </div>
-        </div>
+<div class="app">
+<aside class="sidebar">
+  <div class="brand"><div class="brand-mark">PF</div><div><div class="brand-name">Pawn Compiler</div><span class="brand-sub">Filip Tools</span></div></div>
+  <div class="nav-label">Workspace</div>
+  <nav class="nav">
+    <button data-view="dashboard" class="active"><span class="nav-icon">⌂</span>Обзор</button>
+    <button data-view="files"><span class="nav-icon">▤</span>Файлы проекта</button>
+    <button data-view="editor"><span class="nav-icon">⌘</span>Редактор Pawn</button>
+    <button data-view="build"><span class="nav-icon">▶</span>Сборка</button>
+  </nav>
+  <div class="nav-label" style="margin-top:10px">System</div>
+  <nav class="nav"><button data-view="settings"><span class="nav-icon">⚙</span>Настройки</button></nav>
+  <div class="side-spacer"></div>
+  <div class="side-card"><div class="side-card-title">Compiler status</div><b id="sideCompiler">Checking…</b><span id="sideCompilerSub">Проверка backend</span></div>
+</aside>
+<header class="topbar">
+  <div class="crumbs"><b id="topTitle">Workspace</b><span>/ Pawn Compiler</span></div>
+  <div class="top-actions"><div class="status-chip"><i class="dot"></i><span id="topStatus">No project</span></div><button class="icon-btn desktop-only" id="newProject" title="Очистить проект">＋</button><button class="btn primary" id="uploadTop">Загрузить ZIP</button></div>
+</header>
+<main class="main">
+  <section class="view active" id="view-dashboard">
+    <div class="hero">
+      <div class="eyebrow"><i class="dot"></i> Developer workspace · WebView ready</div>
+      <h1>Собери <span class="glitch" data-text="SA-MP мод">SA-MP мод</span> без лишней возни.</h1>
+      <p>Загрузи полный архив проекта, включая <b>gamemodes</b>, <b>filterscripts</b>, <b>includes</b>, <b>scriptfiles</b> и конфиги. Pawn Compiler проверит структуру, откроет исходники и соберёт AMX на сервере, когда настоящий pawncc подключён.</p>
+      <div class="hero-actions"><button class="btn primary" id="uploadHero">＋ Выбрать ZIP</button><button class="btn" id="demoProject">Показать demo-проект</button></div>
+      <div class="drop" id="drop"><div class="drop-icon">⇧</div><div><b>Перетащи архив сюда</b><span>ZIP · до 250 MB · работает и на Android WebView</span></div><div class="drop-right"><button class="btn" id="uploadDrop">Открыть файл</button></div></div>
     </div>
-
-    <!-- =========================================================== -->
-    <!-- 4. АДМИН-ПАНЕЛЬ                                             -->
-    <!-- =========================================================== -->
-    <div class="admin-overlay" id="adminOverlay">
-        <div class="admin-panel">
-            <button class="btn-close" id="adminClose">✕</button>
-            <h2>⚙️ Админ-панель</h2>
-            <p class="subtitle">Управление плейлистом INTERNET TV</p>
-
-            <!-- БЛОК ВВОДА ПАРОЛЯ -->
-            <div class="password-section" id="passwordSection">
-                <div class="password-lock-icon">🔒</div>
-                <label for="adminPassword">Введите пароль для доступа</label>
-                <div class="password-input-row">
-                    <input type="password" id="adminPassword" placeholder="Введите пароль..." />
-                    <button class="btn-check" id="checkPasswordBtn">Войти</button>
-                </div>
-                <div class="password-status" id="passwordStatus"></div>
-            </div>
-
-            <!-- КОНТЕНТ АДМИНКИ (скрыт до ввода пароля) -->
-            <div class="admin-content" id="adminContent">
-                <label for="videoUrl">Ссылка на видео VK</label>
-                <input type="text" id="videoUrl" placeholder="https://vk.com/video-123456_789012" />
-                <div class="hint">Поддерживаются ссылки вида vk.com/video-XXXXX_YYYYY</div>
-
-                <label for="videoTitle">Название видео</label>
-                <input type="text" id="videoTitle" placeholder="Название для отображения" />
-
-                <button class="btn-submit" id="addVideoBtn">➕ Добавить в плейлист</button>
-
-                <div class="status-msg" id="statusMsg"></div>
-
-                <div class="video-list" id="videoList"></div>
-            </div>
-        </div>
+    <div class="quick-grid">
+      <div class="quick"><div class="q">◈</div><b>Полный мод</b><span>Не только .pwn: вся структура проекта остаётся на месте.</span></div>
+      <div class="quick"><div class="q">⌕</div><b>Быстрый поиск</b><span>Фильтруй тысячи файлов по имени прямо на телефоне.</span></div>
+      <div class="quick"><div class="q">▶</div><b>Multi-build</b><span>Собирай один main или все gamemode/filterscript.</span></div>
+      <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+    <button class="btn" id="policyBtn" style="background:#11141b;border:1px solid var(--line);color:#e7ebf3;border-radius:12px;padding:12px;font-weight:750;text-align:center;">🔒 Политика</button>
+    <button class="btn" id="offerBtn" style="background:#11141b;border:1px solid var(--line);color:#e7ebf3;border-radius:12px;padding:12px;font-weight:750;text-align:center;">📄 Оферта</button>
+</div>
+      <div class="quick"><div class="q">⇩</div><b>AMX ZIP</b><span>После real build получаешь архив со всеми результатами.</span></div>
     </div>
+    <div class="section-head"><h2>Состояние workspace</h2><span>live</span></div>
+    <div class="workspace-grid">
+      <div class="card"><div class="card-head"><div><div class="card-title">Project health</div><div class="card-sub">Структура архива</div></div><span id="healthBadge" class="status-chip">Нет проекта</span></div><div class="card-body"><div class="stats"><div class="stat"><b id="sFiles">—</b><span>Files</span></div><div class="stat"><b id="sPwn">—</b><span>.pwn</span></div><div class="stat"><b id="sInc">—</b><span>.inc</span></div></div><div class="meter"><i id="healthMeter"></i></div><div style="font-size:10px;color:var(--muted2);margin-top:8px" id="healthText">Загрузите архив — здесь появится разбор проекта.</div></div></div>
+      <div class="card"><div class="card-head"><div><div class="card-title">Activity</div><div class="card-sub">Последние действия</div></div></div><div class="card-body"><div class="activity" id="activity"><div class="activity-item"><i class="mini-dot cyan"></i><div><b>Workspace ready</b><span>Готов принять полный SA-MP архив</span></div></div><div class="activity-item"><i class="mini-dot good"></i><div><b>Archive scanner</b><span>Проверяет gamemodes, filterscripts и includes</span></div></div><div class="activity-item"><i class="mini-dot pink"></i><div><b>WebView mode</b><span>Большие touch-targets и safe-area уже включены</span></div></div></div></div></div>
+    </div>
+  </section>
 
-    <!-- =========================================================== -->
-    <!-- 5. VK VIDEO API                                             -->
-    <!-- =========================================================== -->
-    <script src="https://vk.com/js/api/openapi.js?169"></script>
+  <section class="view" id="view-files">
+    <div class="section-head"><div><h2>Файлы проекта</h2><div style="color:var(--muted2);font-size:10px;margin-top:4px">Полная структура загруженного ZIP</div></div><span id="fileCountLabel">0 files</span></div>
+    <div class="card"><div class="card-head"><div class="file-toolbar"><input class="search" id="fileSearch" placeholder="Поиск по файлам…"><select class="search" id="fileFilter"><option value="all">Все</option><option value="gamemodes">gamemodes</option><option value="filterscripts">filterscripts</option><option value="includes">includes</option><option value="scriptfiles">scriptfiles</option><option value="pawn">Pawn</option></select></div><button class="btn" id="exportBtn">⇩ Скачать изменённый ZIP</button></div><div class="tree" id="tree"><div style="padding:28px;color:var(--muted);text-align:center">Сначала загрузите ZIP-проект.</div></div></div>
+  </section>
 
-    <!-- =========================================================== -->
-    <!-- 6. ОСНОВНОЙ СКРИПТ                                          -->
-    <!-- =========================================================== -->
-    <script>
-        // ============================================================
-        // ПАРОЛЬ
-        // ============================================================
-        const ADMIN_PASSWORD = 'Pawlin228!';
+  <section class="view" id="view-editor">
+    <div class="section-head"><div><h2>Редактор Pawn</h2><div style="color:var(--muted2);font-size:10px;margin-top:4px">Изменения сохраняются в текущей рабочей сессии</div></div><span id="openLabel">No file</span></div>
+    <div class="editor-wrap"><div class="editor-top"><div class="tabs" id="tabs"></div><button class="btn" id="saveLocal">Сохранить</button></div><div class="editor"><div class="lines" id="lines">1</div><textarea class="code" id="code" spellcheck="false" placeholder="Открой .pwn или .inc из дерева файлов…"></textarea></div></div>
+  </section>
 
-        // ============================================================
-        // ПЛЕЙЛИСТ
-        // ============================================================
-        let playlist = [
-            { oid: '-232854892', id: '456239108', title: 'ВИКТОРОВИЧ' },
-            { oid: '-217256769', id: '456239103', title: 'Чип и дейл спешат на помощь' },
-            { oid: '-217256769', id: '456239102', title: 'А4 — Челлендж на кухне' }
-        ];
+  <section class="view" id="view-build">
+    <div class="section-head"><div><h2>Build Center</h2><div style="color:var(--muted2);font-size:10px;margin-top:4px">Компиляция gamemodes и filterscripts</div></div><span id="buildModeLabel">Backend: checking</span></div>
+    <div class="card"><div class="card-body">
+      <div class="build-controls">
+        <div class="field"><label>Режим сборки</label><select id="scope"><option value="main">Main gamemode</option><option value="gamemodes">Все gamemodes/*.pwn</option><option value="filterscripts">Все filterscripts/*.pwn</option><option value="all">Весь Pawn-проект</option></select></div>
+        <div class="field"><label>Главный .pwn</label><select id="mainSelect"><option>Сначала загрузите ZIP</option></select></div>
+        <div class="field"><label>Include paths</label><input id="includePaths" placeholder="например: includes; pawno/include"></div>
+        <div class="field"><label>Defines</label><input id="defines" placeholder="например: DEBUG; MYSQL=1"></div>
+      </div>
+      <div class="checks" style="margin-top:10px"><label class="check"><input type="checkbox" id="showWarnings" checked> Показывать warnings</label><label class="check"><input type="checkbox" id="compactLogs"> Короткий лог</label></div>
+      <div class="build-actions"><button class="btn" id="clearLog">Очистить</button><button class="btn primary" id="compileBtn">▶ Компилировать</button></div>
+    </div></div>
+    <div class="card" style="margin-top:12px"><div class="card-head"><div><div class="card-title">Compiler console</div><div class="card-sub" id="consoleSub">Ожидание сборки</div></div><span id="compileChip" class="status-chip">Idle</span></div><div class="terminal" id="log">Pawn Compiler Build Engine\nГотов. Загрузите мод и выберите режим сборки.</div></div>
+  </section>
 
-        // ============================================================
-        // ПЕРЕМЕННЫЕ
-        // ============================================================
-        let currentTrackIndex = 0;
-        let isMuted = true;
-        let player = null;
-        let savedTime = 0;
-        let trackTimer = null;
-        let clickCount = 0;
-        let clickTimer = null;
-        let isPasswordCorrect = false;
+  <section class="view" id="view-settings">
+    <div class="section-head"><div><h2>Настройки</h2><div style="color:var(--muted2);font-size:10px;margin-top:4px">Параметры WebView и workspace</div></div><span>preferences</span></div>
+    <div class="settings-grid">
+      <div class="setting"><b>Размер интерфейса</b><p>Увеличивает масштаб элементов управления для маленького экрана.</p><select id="uiSize"><option value="default">Default</option><option value="large">Large</option><option value="xl">Larger</option></select></div>
+      <div class="setting"><b>Скан-линии</b><p>Лёгкий CRT/glitch-слой. Можно выключить ради максимальной чистоты.</p><select id="scanSetting"><option value="on">On</option><option value="off">Off</option></select></div>
+      <div class="setting"><b>Локальное состояние</b><p>Текущий файл и изменения хранятся только в памяти этой вкладки.</p><button class="btn" id="clearState">Сбросить изменения</button></div>
+      <div class="setting"><b>Backend</b><p id="backendInfo">Проверяем /api/health…</p><button class="btn" id="healthBtn">Проверить backend</button></div>
+    </div>
+  </section>
+</main>
+<nav class="mobile-bottom"><button data-view="dashboard" class="active">⌂<span>Обзор</span></button><button data-view="files">▤<span>Файлы</span></button><button data-view="editor">⌘<span>Код</span></button><button data-view="build">▶<span>Build</span></button><button data-view="settings">⚙<span>Ещё</span></button></nav>
+<div class="toast" id="toast"></div><div class="scanline" id="scanline"></div>
+<div class="modal hidden" id="modal"><div class="modal-card"><div class="modal-head"><b id="modalTitle">Pawn Compiler</b><button class="icon-btn" id="modalClose">×</button></div><div class="modal-body" id="modalBody"></div><div class="modal-foot"><button class="btn" id="modalCancel">Отмена</button><button class="btn primary" id="modalOk">Продолжить</button></div></div></div>
+<input type="file" accept=".zip,application/zip,application/x-zip-compressed" id="fileInput" class="hidden">
+<script>
+const $=id=>document.getElementById(id);let state={archive:null,project:null,projectId:null,currentFile:null,changes:{},compiler:false};
+const navButtons=[...document.querySelectorAll('[data-view]')];
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');clearTimeout(window.__toast);window.__toast=setTimeout(()=>$('toast').classList.remove('show'),2200)}
+function nav(view){navButtons.forEach(b=>b.classList.toggle('active',b.dataset.view===view));document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active',v.id==='view-'+view));const names={dashboard:'Workspace',files:'Project Files',editor:'Pawn Editor',build:'Build Center',settings:'Settings'};$('topTitle').textContent=names[view]||'Workspace';if(view==='files')renderTree()}
+navButtons.forEach(b=>b.addEventListener('click',()=>nav(b.dataset.view)));
+function setStatus(text){$('topStatus').textContent=text}
+function renderLines(){const count=$('code').value.split('\n').length;$('lines').textContent=Array.from({length:count},(_,i)=>i+1).join('\n')}
+$('code').addEventListener('input',()=>{renderLines();if(state.currentFile){state.changes[state.currentFile]=$('code').value; $('openLabel').textContent=state.currentFile+' · edited';}});renderLines();
+function fileType(f){const l=f.toLowerCase();if(l.endsWith('.pwn'))return'PWN';if(l.endsWith('.inc'))return'INC';if(l.endsWith('.amx'))return'AMX';if(l.endsWith('.cfg'))return'CFG';if(l.endsWith('.ini'))return'INI';return'FILE'}
+function categoryFor(f){const l=f.toLowerCase();if(l.startsWith('gamemodes/'))return'gamemodes';if(l.startsWith('filterscripts/'))return'filterscripts';if(l.startsWith('includes/'))return'includes';if(l.startsWith('scriptfiles/'))return'scriptfiles';if(l.endsWith('.pwn'))return' pawn'.trim();return'other'}
+function renderTree(){if(!state.project){$('tree').innerHTML='<div style="padding:28px;color:var(--muted);text-align:center">Сначала загрузите ZIP-проект.</div>';return}const q=$('fileSearch').value.toLowerCase(),filter=$('fileFilter').value;const files=state.project.files.filter(f=>(!q||f.toLowerCase().includes(q))&&(filter==='all'||categoryFor(f)===filter));const groups={gamemodes:[],filterscripts:[],includes:[],scriptfiles:[],pawn:[],other:[]};files.forEach(f=>groups[categoryFor(f)]?.push(f));let html='';const order=['gamemodes','filterscripts','includes','scriptfiles','pawn','other'];for(const g of order){if(!groups[g]?.length)continue;html+=`<div class="folder">▾ ${g} <span style="margin-left:auto;color:#545d6e">${groups[g].length}</span></div>`;for(const f of groups[g])html+=`<div class="file-row ${state.currentFile===f?'active':''}" data-file="${encodeURIComponent(f)}"><span class="file-type">${fileType(f)}</span><span class="path">${f}</span><span class="pill">${f.split('.').pop().toUpperCase()}</span></div>`}if(!html)html='<div style="padding:28px;color:var(--muted);text-align:center">Ничего не найдено.</div>';$('tree').innerHTML=html;$('tree').querySelectorAll('.file-row').forEach(el=>el.addEventListener('click',()=>openFile(decodeURIComponent(el.dataset.file))))}
+$('fileSearch').addEventListener('input',renderTree);$('fileFilter').addEventListener('change',renderTree);
+async function inspect(){const fd=new FormData();fd.append('projectId',state.projectId);$('topStatus').textContent='Scanning…';const r=await fetch('/api/project/inspect',{method:'POST',body:fd});const d=await r.json();if(!r.ok)throw new Error(d.error||'Не удалось прочитать ZIP');state.project=d;state.compiler=d.compiler;$('sideCompiler').textContent=d.compiler?'Real compiler connected':'Mock mode';$('sideCompilerSub').textContent=d.compiler?'pawncc доступен':'Нужен PAWN_COMPILER на backend';$('buildModeLabel').textContent='Backend: '+(d.compiler?'REAL':'MOCK');$('sFiles').textContent=d.stats.files;$('sPwn').textContent=d.stats.pawns;$('sInc').textContent=d.stats.includes;$('fileCountLabel').textContent=d.stats.files+' files';$('healthBadge').textContent=d.compiler?'Compiler ready':'Mock compiler';$('healthMeter').style.width=Math.min(100,25+d.stats.pawns*10+d.stats.includes*4)+'%';$('healthText').textContent=`gamemodes: ${d.stats.gamemodes} · filterscripts: ${d.stats.filterscripts} · scriptfiles: ${d.stats.scriptfiles}`;setStatus(d.name);$('mainSelect').innerHTML=d.files.filter(f=>f.toLowerCase().endsWith('.pwn')).map(f=>`<option ${f===d.main?'selected':''}>${f}</option>`).join('')||'<option>Нет .pwn</option>';renderTree();addActivity('cyan','Archive scanned',`${d.stats.files} файлов · ${d.stats.pawns} Pawn sources`);if(d.main)openFile(d.main)}
+function uploadArchive(file){return new Promise((resolve,reject)=>{const xhr=new XMLHttpRequest();xhr.open('POST','/api/project/upload');xhr.responseType='json';xhr.upload.onprogress=e=>{if(e.lengthComputable){const pct=Math.round(e.loaded/e.total*100);$('topStatus').textContent=`Upload ${pct}%`;$('drop').querySelector('span').textContent=`Загрузка архива… ${pct}%`}};xhr.onload=()=>{const d=xhr.response||{};if(xhr.status>=200&&xhr.status<300&&d.success){resolve(d)}else reject(new Error(d.error||`Upload failed (${xhr.status})`))};xhr.onerror=()=>reject(new Error('Сеть недоступна или upload был прерван'));xhr.send((()=>{const fd=new FormData();fd.append('archive',file);return fd})())})}
+async function loadArchive(file){if(!file)return;if(!file.name.toLowerCase().endsWith('.zip')){toast('Нужен ZIP архив');return}state.archive=file;state.changes={};state.currentFile=null;try{const uploaded=await uploadArchive(file);state.projectId=uploaded.projectId;await inspect();$('drop').querySelector('span').textContent='ZIP · до 250 MB · работает и на Android WebView';toast('Мод загружен');nav('dashboard')}catch(e){state.archive=null;state.projectId=null;setStatus('Upload error');$('log').innerHTML='<span class="bad">'+escapeHtml(e.message)+'</span>';toast(e.message)}}
+function addActivity(type,title,sub){const wrap=$('activity');const div=document.createElement('div');div.className='activity-item';div.innerHTML=`<i class="mini-dot ${type}"></i><div><b>${escapeHtml(title)}</b><span>${escapeHtml(sub)}</span></div>`;wrap.prepend(div);while(wrap.children.length>4)wrap.lastElementChild.remove()}
+async function openFile(name){if(!state.archive||!name)return;try{if(state.currentFile&&state.currentFile!==name&&!Object.prototype.hasOwnProperty.call(state.changes,state.currentFile))state.changes[state.currentFile]=$('code').value;state.currentFile=name;let content=state.changes[name];if(content===undefined){const fd=new FormData();fd.append('projectId',state.projectId);fd.append('file',name);const r=await fetch('/api/project/file',{method:'POST',body:fd});const d=await r.json();if(!r.ok)throw new Error(d.error||'Файл не открылся');content=d.content}$('code').value=content;renderLines();$('openLabel').textContent=name;$('tabs').innerHTML=`<div class="tab active">${escapeHtml(name)}</div>`;renderTree();nav('editor')}catch(e){toast(e.message)}}
+function escapeHtml(s){return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')}
+$('uploadTop').onclick=$('uploadHero').onclick=$('uploadDrop').onclick=()=>$('fileInput').click();$('fileInput').addEventListener('change',e=>{const f=e.target.files?.[0];if(f)loadArchive(f);e.target.value='' });
+$('drop').addEventListener('dragover',e=>{e.preventDefault();$('drop').classList.add('drag')});$('drop').addEventListener('dragleave',()=>$('drop').classList.remove('drag'));$('drop').addEventListener('drop',e=>{e.preventDefault();$('drop').classList.remove('drag');loadArchive(e.dataTransfer.files?.[0])});
+$('newProject').onclick=()=>{state={archive:null,project:null,projectId:null,currentFile:null,changes:{},compiler:false};$('code').value='';renderLines();setStatus('No project');$('tree').innerHTML='<div style="padding:28px;color:var(--muted);text-align:center">Сначала загрузите ZIP-проект.</div>';toast('Workspace очищен')};
+$('demoProject').onclick=()=>{toast('Для полного демо нужен реальный ZIP с gamemodes/. Загрузите архив проекта.');nav('files')};
+$('saveLocal').onclick=()=>{if(!state.currentFile){toast('Нет открытого файла');return}state.changes[state.currentFile]=$('code').value;toast('Изменения сохранены в сессии');addActivity('good','File edited',state.currentFile)};
+$('exportBtn').onclick=async()=>{if(!state.projectId){toast('Нет загруженного проекта');return}try{const fd=new FormData();fd.append('projectId',state.projectId);fd.append('changes',JSON.stringify(state.changes));const r=await fetch('/api/project/export',{method:'POST',body:fd});const d=await r.json();if(!r.ok||!d.success)throw new Error(d.error||'Экспорт не удался');downloadBase64(d.data,d.filename);toast(`ZIP экспортирован · ${d.changed} изменений`)}catch(e){toast(e.message)}};
+function downloadBase64(data,filename){const a=document.createElement('a');a.href='data:application/zip;base64,'+data;a.download=filename;a.click()}
+$('compileBtn').onclick=async()=>{if(!state.projectId){toast('Сначала загрузите ZIP');nav('dashboard');return}const btn=$('compileBtn');btn.disabled=true;btn.textContent='⏳ Сборка…';$('compileChip').textContent='Running';$('consoleSub').textContent='Компилятор выполняет задачи…';$('log').textContent='Запуск Pawn Compiler Build Engine…\n';try{const fd=new FormData();fd.append('projectId',state.projectId);fd.append('scope',$('scope').value);fd.append('main',$('mainSelect').value);fd.append('includePaths',$('includePaths').value);fd.append('defines',$('defines').value);fd.append('changes',JSON.stringify(state.changes));const r=await fetch('/api/compile',{method:'POST',body:fd});const d=await r.json();const compact=$('compactLogs').checked;let lines=d.logs||[d.error||'Ошибка'];if(compact)lines=lines.filter(x=>/^(✓|✗|ERROR|⚠|Build|Scope:|Sources:|Compiler:|→|$)/.test(x));$('log').innerHTML=lines.map(line=>{const cls=/^✓/.test(line)?'good':/^✗|ERROR/.test(line)?'bad':/^⚠|→/.test(line)?'warn':'';return `<span class="${cls}">${escapeHtml(line)}</span>`}).join('\n');$('compileChip').textContent=d.success?'Success':'Failed';$('consoleSub').textContent=`${d.elapsed??0} ms · ${d.targets?.length||0} source(s)`;addActivity(d.success?'good':'pink',d.success?'Build finished':'Build failed',`${d.targets?.length||0} source(s) · ${d.mode||'unknown'}`);if(d.success&&d.mode==='real'&&d.data)downloadBase64(d.data,d.filename||'pawncompiler-build-output.zip');if(d.success&&d.mode==='mock')toast('Mock build: подключи pawncc для AMX')}catch(e){$('log').innerHTML='<span class="bad">'+escapeHtml(e.message)+'</span>';$('compileChip').textContent='Error';toast('Ошибка сборки')}finally{btn.disabled=false;btn.textContent='▶ Компилировать'}};
+$('clearLog').onclick=()=>{$('log').textContent='Pawn Compiler Build Engine\nLog cleared.';$('compileChip').textContent='Idle'};
+$('healthBtn').onclick=checkHealth;
+async function checkHealth(){try{const r=await fetch('/api/health');const d=await r.json();$('backendInfo').textContent=`API OK · v${d.version} · upload limit ${Math.round(d.maxUploadBytes/1024/1024)} MB · ${d.compiler?'REAL compiler connected':'MOCK mode'}`;$('sideCompiler').textContent=d.compiler?'Real compiler connected':'Mock mode';$('sideCompilerSub').textContent=d.compiler?'pawncc доступен':'PAWN_COMPILER не задан';}catch(e){$('backendInfo').textContent='Backend недоступен: '+e.message;$('sideCompiler').textContent='Offline'}}
+$('uiSize').onchange=e=>{document.documentElement.style.fontSize=e.target.value==='large'?'106%':e.target.value==='xl'?'112%':'100%'};$('scanSetting').onchange=e=>$('scanline').style.display=e.target.value==='off'?'none':'block';$('clearState').onclick=()=>{state.changes={};toast('Изменения сброшены');if(state.currentFile)openFile(state.currentFile)};
+checkHealth();
+document.addEventListener('DOMContentLoaded', function() {
+    const modal = document.getElementById('modal');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalBody = document.getElementById('modalBody');
+    const modalCancel = document.getElementById('modalCancel');
+    const modalOk = document.getElementById('modalOk');
+    const modalClose = document.getElementById('modalClose');
 
-        // ============================================================
-        // ⏰ ЧАСЫ + ОТКРЫТИЕ АДМИНКИ ПО 20 КЛИКАМ
-        // ============================================================
-        function updateClock() {
-            const now = new Date();
-            const h = String(now.getHours()).padStart(2, '0');
-            const m = String(now.getMinutes()).padStart(2, '0');
-            const s = String(now.getSeconds()).padStart(2, '0');
-            document.getElementById('clockDisplay').textContent = h + ':' + m + ':' + s;
-        }
-        updateClock();
-        setInterval(updateClock, 1000);
+    function showModal(title, text) {
+        modalTitle.textContent = title;
+        modalBody.innerHTML = text.replace(/\n/g, '<br>');
+        modal.classList.remove('hidden');
+        modalOk.classList.add('hidden');
+        modalCancel.textContent = 'Закрыть';
+    }
 
-        // Обработчик кликов по часам
-        document.getElementById('clockDisplay').addEventListener('click', function() {
-            clickCount++;
+    document.getElementById('policyBtn').addEventListener('click', function() {
+        showModal('Политика Конфиденциальности',
+            'ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ\n\n' +
+            'Приложение Pawn Compiler не собирает, не хранит и не передаёт личные данные пользователей.\n\n' +
+            'Файлы .pwn и .amx остаются на вашем устройстве.\n\n' +
+            'Приложение работает офлайн и не отправляет код на серверы.\n\n' +
+            'Контакты: filipstudio9@gmail.com'
+        );
+    });
 
-            if (clickTimer) clearTimeout(clickTimer);
-            clickTimer = setTimeout(() => {
-                clickCount = 0;
-            }, 2000);
+    document.getElementById('offerBtn').addEventListener('click', function() {
+        showModal('Договор Оферты',
+            'ДОГОВОР ОФЕРТЫ\n\n' +
+            'Разработчик Filip Games предоставляет право использовать Pawn Compiler для компиляции .pwn в .amx.\n\n' +
+            'Приложение бесплатно. Пользователь отвечает за свой код.\n\n' +
+            'Запрещено использовать для вредоносного ПО.\n\n' +
+            'Авторские права защищены (ст. 146 УК РФ).\n\n' +
+            'Контакты: filipstudio9@gmail.com'
+        );
+    });
 
-            if (clickCount >= 20) {
-                clickCount = 0;
-                // Сбрасываем пароль при открытии
-                isPasswordCorrect = false;
-                document.getElementById('passwordSection').style.display = 'block';
-                document.getElementById('adminContent').classList.remove('active');
-                document.getElementById('adminPassword').value = '';
-                document.getElementById('passwordStatus').className = 'password-status';
-                document.getElementById('passwordStatus').textContent = '';
-                document.getElementById('adminOverlay').classList.add('active');
-            }
-        });
-
-        // ============================================================
-        // ПРОВЕРКА ПАРОЛЯ
-        // ============================================================
-        document.getElementById('checkPasswordBtn').addEventListener('click', function() {
-            checkPassword();
-        });
-
-        document.getElementById('adminPassword').addEventListener('keydown', function(e) {
-            if (e.key === 'Enter') {
-                checkPassword();
-            }
-        });
-
-        function checkPassword() {
-            const input = document.getElementById('adminPassword');
-            const status = document.getElementById('passwordStatus');
-            const password = input.value.trim();
-
-            if (password === ADMIN_PASSWORD) {
-                isPasswordCorrect = true;
-                status.className = 'password-status success';
-                status.textContent = '✅ Доступ разрешён!';
-                document.getElementById('passwordSection').style.display = 'none';
-                document.getElementById('adminContent').classList.add('active');
-                updateVideoList();
-                setTimeout(() => {
-                    status.className = 'password-status';
-                    status.textContent = '';
-                }, 1500);
-            } else {
-                status.className = 'password-status error';
-                status.textContent = '❌ Неверный пароль! Попробуйте снова.';
-                input.value = '';
-                input.focus();
-                setTimeout(() => {
-                    status.className = 'password-status';
-                    status.textContent = '';
-                }, 3000);
-            }
-        }
-
-        // ============================================================
-        // АДМИН-ПАНЕЛЬ — ДОБАВЛЕНИЕ ВИДЕО
-        // ============================================================
-        function parseVkUrl(url) {
-            const match = url.match(/video(-?\d+)_(\d+)/);
-            if (match) {
-                return { oid: match[1], id: match[2] };
-            }
-            return null;
-        }
-
-        document.getElementById('addVideoBtn').addEventListener('click', function() {
-            if (!isPasswordCorrect) {
-                document.getElementById('statusMsg').className = 'status-msg error';
-                document.getElementById('statusMsg').textContent = '❌ Сначала введите пароль!';
-                return;
-            }
-
-            const urlInput = document.getElementById('videoUrl');
-            const titleInput = document.getElementById('videoTitle');
-            const statusMsg = document.getElementById('statusMsg');
-
-            const url = urlInput.value.trim();
-            const title = titleInput.value.trim() || 'Без названия';
-
-            if (!url) {
-                statusMsg.className = 'status-msg error';
-                statusMsg.textContent = '❌ Введите ссылку на видео';
-                return;
-            }
-
-            const parsed = parseVkUrl(url);
-            if (!parsed) {
-                statusMsg.className = 'status-msg error';
-                statusMsg.textContent = '❌ Неверный формат ссылки. Пример: https://vk.com/video-123456_789012';
-                return;
-            }
-
-            playlist.push({
-                oid: parsed.oid,
-                id: parsed.id,
-                title: title
-            });
-
-            updateVideoList();
-            updateCurrentVideo();
-
-            statusMsg.className = 'status-msg success';
-            statusMsg.textContent = '✅ Видео добавлено!';
-            urlInput.value = '';
-            titleInput.value = '';
-
-            createPlayer();
-            startTrackTimer();
-        });
-
-        function updateVideoList() {
-            const list = document.getElementById('videoList');
-            if (playlist.length === 0) {
-                list.innerHTML =
-                '<div style="color:#64748b;font-size:13px;text-align:center;padding:12px;">Плейлист пуст</div>';
-                return;
-            }
-
-            list.innerHTML = playlist.map((item, index) =>
-                `<div class="video-list-item">
-                    <span>${index + 1}. ${item.title}</span>
-                    <button class="remove-btn" data-index="${index}">✕</button>
-                </div>`
-            ).join('');
-
-            list.querySelectorAll('.remove-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const index = parseInt(this.dataset.index);
-                    if (confirm(`Удалить "${playlist[index].title}"?`)) {
-                        playlist.splice(index, 1);
-                        updateVideoList();
-                        if (currentTrackIndex >= playlist.length) {
-                            currentTrackIndex = 0;
-                        }
-                        createPlayer();
-                        startTrackTimer();
-                    }
-                });
-            });
-        }
-
-        function updateCurrentVideo() {
-            if (playlist.length > 0 && currentTrackIndex >= playlist.length) {
-                currentTrackIndex = 0;
-            }
-            if (playlist.length > 0) {
-                document.getElementById('currentShowTitle').textContent = playlist[currentTrackIndex].title;
-            } else {
-                document.getElementById('currentShowTitle').textContent = 'Плейлист пуст';
-            }
-        }
-
-        // Закрытие админки
-        document.getElementById('adminClose').addEventListener('click', function() {
-            document.getElementById('adminOverlay').classList.remove('active');
-        });
-
-        document.getElementById('adminOverlay').addEventListener('click', function(e) {
-            if (e.target === this) {
-                this.classList.remove('active');
-            }
-        });
-
-        // ============================================================
-        // СОХРАНЕНИЕ СОСТОЯНИЯ
-        // ============================================================
-        function loadSavedState() {
-            const saved = localStorage.getItem('internet_tv_state');
-            if (saved) {
-                try {
-                    const data = JSON.parse(saved);
-                    if (data.trackIndex !== undefined) {
-                        currentTrackIndex = data.trackIndex % playlist.length;
-                    }
-                    if (data.time) {
-                        savedTime = parseFloat(data.time) || 0;
-                    }
-                    if (data.playlist) {
-                        playlist = data.playlist;
-                    }
-                } catch (e) { /* тихо */ }
-            }
-        }
-
-        function saveCurrentState(time) {
-            try {
-                localStorage.setItem('internet_tv_state', JSON.stringify({
-                    trackIndex: currentTrackIndex,
-                    time: time || 0,
-                    playlist: playlist
-                }));
-            } catch (e) { /* тихо */ }
-        }
-
-        // ============================================================
-        // СОЗДАНИЕ ПЛЕЕРА (VK)
-        // ============================================================
-        function createPlayer() {
-            const container = document.getElementById('playerContainer');
-            const placeholder = document.getElementById('vk-iframe-placeholder');
-            if (!placeholder) return;
-
-            if (playlist.length === 0) {
-                placeholder.innerHTML =
-                    '<div style="display:flex;align-items:center;justify-content:center;height:100%;color:#64748b;font-size:16px;">Плейлист пуст</div>';
-                document.getElementById('currentShowTitle').textContent = 'Плейлист пуст';
-                return;
-            }
-
-            if (currentTrackIndex >= playlist.length) {
-                currentTrackIndex = 0;
-            }
-
-            const video = playlist[currentTrackIndex];
-            document.getElementById('currentShowTitle').textContent = video.title;
-
-            placeholder.innerHTML = '';
-
-            const iframe = document.createElement('iframe');
-            iframe.src =
-                `https://vk.com/video_ext.php?oid=${video.oid}&id=${video.id}&hash=5d6e5c6d7b1e84&autoplay=1&mute=${isMuted ? 1 : 0}`;
-            iframe.width = '100%';
-            iframe.height = '100%';
-            iframe.allow = 'autoplay; encrypted-media; fullscreen; picture-in-picture;';
-            iframe.allowFullscreen = true;
-            iframe.frameBorder = '0';
-            iframe.style.border = 'none';
-            iframe.style.width = '100%';
-            iframe.style.height = '100%';
-
-            placeholder.appendChild(iframe);
-            player = iframe;
-
-            let shield = document.getElementById('shield');
-            if (!shield) {
-                shield = document.createElement('div');
-                shield.className = 'shield';
-                shield.id = 'shield';
-                container.appendChild(shield);
-            }
-
-            console.log('🎬 VK Video:', video.title);
-        }
-
-        // ============================================================
-        // АВТОПЕРЕКЛЮЧЕНИЕ
-        // ============================================================
-        function startTrackTimer() {
-            if (trackTimer) clearTimeout(trackTimer);
-            if (playlist.length === 0) return;
-            trackTimer = setTimeout(() => {
-                currentTrackIndex++;
-                if (currentTrackIndex >= playlist.length) {
-                    currentTrackIndex = 0;
-                }
-                savedTime = 0;
-                saveCurrentState(0);
-                createPlayer();
-                startTrackTimer();
-            }, 480000);
-        }
-
-        // ============================================================
-        // КНОПКА ЗВУКА
-        // ============================================================
-        const muteBtn = document.getElementById('mute-btn');
-        muteBtn.addEventListener('click', function() {
-            isMuted = !isMuted;
-            this.textContent = isMuted ? '🔊 Звук' : '🔇 Без звука';
-            createPlayer();
-            startTrackTimer();
-        });
-
-        // ============================================================
-        // КНОПКА ПОЛНЫЙ ЭКРАН
-        // ============================================================
-        document.getElementById('fs-btn').addEventListener('click', function() {
-            const container = document.getElementById('playerContainer');
-            if (container.requestFullscreen) {
-                container.requestFullscreen();
-            } else if (container.webkitRequestFullscreen) {
-                container.webkitRequestFullscreen();
-            } else if (container.msRequestFullscreen) {
-                container.msRequestFullscreen();
-            }
-        });
-
-        // ============================================================
-        // ЗАПУСК
-        // ============================================================
-        loadSavedState();
-        createPlayer();
-        startTrackTimer();
-
-        window.addEventListener('beforeunload', function() {
-            saveCurrentState(0);
-        });
-
-        console.log('📺 INTERNET TV загружен!');
-        console.log('🔑 Админ-панель: 20 кликов по часам');
-        console.log('🔒 Пароль: ' + ADMIN_PASSWORD);
-    </script>
-
+    modalCancel.addEventListener('click', function() { modal.classList.add('hidden'); });
+    modalClose.addEventListener('click', function() { modal.classList.add('hidden'); });
+});
+</script>
 </body>
 </html>
