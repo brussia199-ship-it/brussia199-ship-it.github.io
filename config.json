@@ -1,0 +1,163 @@
+{
+  "remarks": "🇩🇪 Германия",
+  "log": { "loglevel": "warning" },
+  "dns": {
+    "servers": ["1.0.0.1", "8.8.4.4"],
+    "queryStrategy": "UseIP"
+  },
+  "burstObservatory": {
+    "subjectSelector": ["proxy-"],
+    "pingConfig": {
+      "destination": "https://www.google.com/generate_204",
+      "interval": "1m",
+      "sampling": 5,
+      "timeout": "5s"
+    }
+  },
+  "routing": {
+    "domainMatcher": "hybrid",
+    "domainStrategy": "IPIfNonMatch",
+    "balancers": [
+      {
+        "tag": "balancer",
+        "selector": ["proxy-"],
+        "strategy": { "type": "leastPing" }
+      }
+    ],
+    "rules": [
+      {
+        "type": "field",
+        "protocol": ["bittorrent"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "domain": [
+          "domain:2ip.ru",
+          "domain:2ip.io",
+          "domain:whoer.net",
+          "domain:yoomoney.ru",
+          "domain:browserleaks.com"
+        ],
+        "balancerTag": "balancer"
+      },
+      {
+        "type": "field",
+        "domain": ["geosite:category-ru", "domain:ru", "domain:su"],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "ip": [
+          "10.0.0.0/8",
+          "100.64.0.0/10",
+          "127.0.0.0/8",
+          "169.254.0.0/16",
+          "172.16.0.0/12",
+          "192.168.0.0/16",
+          "::1/128",
+          "fc00::/7",
+          "fe80::/10"
+        ],
+        "outboundTag": "direct"
+      },
+      {
+        "type": "field",
+        "network": "tcp,udp",
+        "balancerTag": "balancer"
+      }
+    ]
+  },
+  "inbounds": [
+    {
+      "tag": "socks",
+      "port": 10808,
+      "listen": "127.0.0.1",
+      "protocol": "socks",
+      "settings": { "udp": true, "auth": "noauth" },
+      "sniffing": {
+        "enabled": true,
+        "routeOnly": false,
+        "destOverride": ["http", "tls", "quic"]
+      }
+    },
+    {
+      "tag": "http",
+      "port": 10809,
+      "listen": "127.0.0.1",
+      "protocol": "http",
+      "settings": { "allowTransparent": false },
+      "sniffing": {
+        "enabled": true,
+        "routeOnly": false,
+        "destOverride": ["http", "tls", "quic"]
+      }
+    }
+  ],
+  "outbounds": [
+    {
+      "tag": "proxy-1",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "qbszmq.ilovecats.space",
+            "port": 443,
+            "users": [
+              {
+                "id": "0ca4cb06-f181-42d4-92c6-ecaefbb5a09f",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "qbszmq.ilovecats.space",
+          "publicKey": "2hifBY7pUdLKNf0MvJSV-EqjTN-sAocJu0kwGBXPdnA",
+          "shortId": "da64f68c3ff551b7",
+          "fingerprint": "firefox"
+        }
+      }
+    },
+    {
+      "tag": "proxy-2",
+      "protocol": "vless",
+      "settings": {
+        "vnext": [
+          {
+            "address": "94.156.115.227",
+            "port": 443,
+            "users": [
+              {
+                "id": "54206fb1-8c70-4c26-8ce1-23a344e9cf6f",
+                "encryption": "none",
+                "flow": "xtls-rprx-vision"
+              }
+            ]
+          }
+        ]
+      },
+      "streamSettings": {
+        "network": "tcp",
+        "security": "reality",
+        "realitySettings": {
+          "serverName": "qwert.pashalloh.org",
+          "publicKey": "sQf2ZDIfDlHdWgcmnw6Xbc5jolvhfM1eTsrgpWXaG10",
+          "shortId": "da4d87fa",
+          "fingerprint": "firefox"
+        },
+        "sockopt": {
+          "tcpFastOpen": true,
+          "tcpKeepAliveInterval": 30
+        }
+      }
+    },
+    { "tag": "direct", "protocol": "freedom" },
+    { "tag": "block", "protocol": "blackhole" }
+  ]
+}
